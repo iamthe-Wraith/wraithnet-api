@@ -1,0 +1,3 @@
+[submodule "dev-certs"]
+	path = dev-certs
+	url = https://github.com/iamthe-Wraith/wraithnet-dev-certs.git
