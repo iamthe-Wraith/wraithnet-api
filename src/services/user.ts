@@ -482,7 +482,7 @@ export class UsersService {
 
   static async delete (req:IRequest):Promise<string> {
     const { username } = req.params;
-    const { permanent } = req.query;
+    const { permanent = false } = req.body;
 
     let user:IUser;
 
@@ -509,7 +509,7 @@ export class UsersService {
         if (req.requestor) {
           try {
             if (req.requestor.permissions === PERMISSION.GOD) {
-              if (permanent === 'true') {
+              if (permanent) {
                 await user.remove();
               } else {
                 user.lastModified = new Date();
