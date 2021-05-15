@@ -512,12 +512,14 @@ export class UsersService {
               if (permanent === 'true') {
                 await user.remove();
               } else {
+                user.lastModified = new Date();
                 user.statuses.markedForDeletion = true;
   
                 await user.save();
               }
               return 'other';
             } else if (req.requestor._id.toString() === user._id.toString() || (req.requestor.permissions < user.permissions && req.requestor.permissions === PERMISSION.ADMIN)) {
+              user.lastModified = new Date();
               user.statuses.markedForDeletion = true;
 
               await user.save();
