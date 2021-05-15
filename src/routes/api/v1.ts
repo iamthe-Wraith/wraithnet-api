@@ -18,11 +18,17 @@ router.route(USERS_ROUTE)
       authMiddleware(req, res, next);
     } else {
       // is request by new user to create account...this is not supported currently.
-      next();
+      // next();
 
-      // Response.error(new CustomError('You are not authorized to make this request.', ERROR.UNAUTHORIZED), req, res);
+      Response.error(new CustomError('You are not authorized to make this request.', ERROR.UNAUTHORIZED), req, res);
     }
   }, UsersController.create)
   .get(authMiddleware, UsersController.get);
+
+router.route(`${USERS_ROUTE}/:username`)
+  .get(authMiddleware, UsersController.get)
+  .patch(authMiddleware, UsersController.update)
+  .delete(authMiddleware, UsersController.delete);
+
 
 export const v1Router = router;

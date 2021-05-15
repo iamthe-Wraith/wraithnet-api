@@ -494,6 +494,7 @@ export class UsersService {
 
   static async delete (req:IRequest):Promise<string> {
     const { username } = req.params;
+    const { permanent } = req.query;
 
     let user:IUser;
 
@@ -502,10 +503,11 @@ export class UsersService {
        * make custom request object to reuse User.get and
        * retrieve user to be updated
        */
-      const query = <express.Request>{
+      const query = {
         params: {},
-        query: {}
-      };
+        query: {},
+        requestor: req.requestor,
+      } as IRequest;
       query.params.username = username;
 
       try {
@@ -518,12 +520,17 @@ export class UsersService {
       if (user) {
         if (req.requestor) {
           try {
-            if (req.requestor.permissions < user.permissions && req.requestor.permissions <= PERMISSION.ADMIN) {
-              // requestor has greater permissions than user...okay to delete
-              await user.remove();
+            if (req.requestor.permissions === PERMISSION.GOD) {
+              if (permanent === 'true') {
+                await user.remove();
+              } else {
+                user.statuses.markedForDeletion = true;
+                user.statuses.online = false;
+  
+                await user.save();
+              }
               return 'other';
-            } else if (req.requestor._id.toString() === user._id.toString()) {
-              // user is requesting to delete their own account, should only mark account for deletion
+            } else if (req.requestor._id.toString() === user._id.toString() || (req.requestor.permissions < user.permissions && req.requestor.permissions === PERMISSION.ADMIN)) {
               user.statuses.markedForDeletion = true;
               user.statuses.online = false;
 
