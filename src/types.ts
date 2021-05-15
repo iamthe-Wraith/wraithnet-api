@@ -89,8 +89,6 @@ export interface IUserSharable {
 }
 
 export interface IUserStatuses {
-  modified: boolean;
-  online: boolean;
   verified: boolean;
   banned?: boolean;
   markedForDeletion?: boolean;

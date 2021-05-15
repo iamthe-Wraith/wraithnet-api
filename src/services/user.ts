@@ -153,8 +153,6 @@ export class UsersService {
 
   static getSharable (user:IUser, requestor?:IUser):IUserSharable {
     const statuses = <IUserStatuses>{
-      modified: user.statuses.modified,
-      online: user.statuses.online,
       verified: user.statuses.verified
     };
 
@@ -398,17 +396,10 @@ export class UsersService {
         if (statuses) {
           // statuse object found...verifying if a valid status was provided.
           const {
-            online,
             verified,
             banned,
             markedForDeletion
           } = statuses;
-
-          if (online !== undefined) {
-            // new online status found
-            user.statuses.online = !!online;
-            somethingIsBeingUpdated = true;
-          }
 
           if (verified !== undefined) {
             // new verified status found
@@ -430,7 +421,6 @@ export class UsersService {
               req.requestor.permissions <= user.permissions
             ) {
               user.statuses.banned = !!banned;
-              user.statuses.online = false;
               somethingIsBeingUpdated = true;
             } else {
               const msg = req.requestor.username === username
@@ -455,7 +445,6 @@ export class UsersService {
               req.requestor.permissions <= user.permissions
             ) {
               user.statuses.markedForDeletion = !!markedForDeletion;
-              user.statuses.online = false;
               somethingIsBeingUpdated = true;
             } else {
               const msg = req.requestor.username === username
@@ -469,7 +458,6 @@ export class UsersService {
 
         if (somethingIsBeingUpdated) {
           try {
-            user.statuses.modified = true;
             user.lastModified = new Date();
 
             // calling save to run validators
@@ -525,14 +513,12 @@ export class UsersService {
                 await user.remove();
               } else {
                 user.statuses.markedForDeletion = true;
-                user.statuses.online = false;
   
                 await user.save();
               }
               return 'other';
             } else if (req.requestor._id.toString() === user._id.toString() || (req.requestor.permissions < user.permissions && req.requestor.permissions === PERMISSION.ADMIN)) {
               user.statuses.markedForDeletion = true;
-              user.statuses.online = false;
 
               await user.save();
               return 'self';

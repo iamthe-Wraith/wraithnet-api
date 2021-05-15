@@ -43,10 +43,10 @@ const UserSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: new Date()
+    default: new Date(),
   },
   lastModified: {
-    type: Date
+    type: Date,
   },
   statuses: {
     banned: {
@@ -56,14 +56,6 @@ const UserSchema = new mongoose.Schema({
     markedForDeletion: {
       type: Boolean,
       default: false
-    },
-    modified: {
-      type: Boolean,
-      default: false
-    },
-    online: {
-      type: Boolean,
-      default: true
     },
     verified: {
       type: Boolean,
