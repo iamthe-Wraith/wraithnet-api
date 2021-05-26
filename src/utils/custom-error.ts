@@ -12,4 +12,20 @@ class CustomError extends Error {
   }
 }
 
+export const asCustomError = (err: any, code?: ICustomErrorBody) => {
+  let error: CustomError;
+
+  if (err.isCustomError) {
+    error = err;
+  } else if (err.errors) {
+    error = new CustomError(err.errors[Object.keys(err.errors)[0]], ERROR.INVALID_ARG);
+  } else if (typeof err === 'string') {
+    error = new CustomError(err, code);
+  } else {
+    error = new CustomError(err.message, code);
+  }
+
+  return error;
+}
+
 export default CustomError;

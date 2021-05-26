@@ -1,7 +1,7 @@
 import express from 'express';
 
 import { User } from '../models/user';
-import CustomError from '../utils/custom-error';
+import CustomError, { asCustomError } from '../utils/custom-error';
 import Auth from '../utils/auth';
 import {
   AUTH_ROUTE,
@@ -17,8 +17,10 @@ import {
   IUserSharable,
   IUserStatuses,
   IUser,
-  PERMISSION
+  PERMISSION,
+  IRequestHandler
 } from '../types';
+import { AuthService } from './auth';
 // import { getPaginationPage } from '../utils/pagination';
 
 /**
@@ -110,7 +112,7 @@ export class UsersService {
         throw new CustomError(`username unavailable`, ERROR.NOT_ALLOWED);
       }
 
-      if (password.length < MIN_PASSWORD_LENGTH) {
+      if (!Auth.isStrongPassword(password)) {
         throw new CustomError(`password must be greater than ${MIN_PASSWORD_LENGTH} characters long`, ERROR.INVALID_ARG);
       }
 
@@ -129,12 +131,10 @@ export class UsersService {
     } catch (err) {
       let error:CustomError;
 
-      if (err.isCustomError) {
-        error = err;
-      } else if (err.errors) {
+      if (err.errors) {
         error = new CustomError(err.errors[Object.keys(err.errors)[0]], ERROR.INVALID_ARG);
       } else {
-        error = new CustomError(err.message);
+        error = asCustomError(err);
       }
 
       throw error;
@@ -268,17 +268,7 @@ export class UsersService {
         throw new CustomError(msg, ERROR.NOT_FOUND);
       }
     } catch (err) {
-      let error:CustomError;
-
-      if (err.isCustomError) {
-        error = err;
-      } else if (err.errors) {
-        error = new CustomError(err.errors[Object.keys(err.errors)[0]], ERROR.INVALID_ARG);
-      } else {
-        error = new CustomError(err.message);
-      }
-
-      throw error;
+      throw asCustomError(err);
     }
   }
 
@@ -546,6 +536,33 @@ export class UsersService {
       }
     } else {
       throw new CustomError('no username found', ERROR.NOT_FOUND);
+    }
+  }
+
+  static async changePassword (req: IRequest): Promise<IUser> {
+    const { currentPassword, newPassword } = req.body;
+    let hash: string;
+
+    try {
+      await Auth.isValidPassword(currentPassword, req.requestor.password);
+
+      if (!Auth.isStrongPassword(newPassword)) {
+        throw new CustomError(`password must be greater than ${MIN_PASSWORD_LENGTH} characters long`, ERROR.INVALID_ARG);
+      }
+
+      hash = await Auth.generatePasswordHash(newPassword);
+    } catch (err) {
+      throw new CustomError('invalid password', ERROR.AUTHENTICATION);
+    }
+
+    if (hash) {
+      try {
+        req.requestor.password = hash;
+        await req.requestor.save();
+        return req.requestor;
+      } catch (err) {
+        throw asCustomError(err);
+      }
     }
   }
 }

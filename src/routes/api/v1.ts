@@ -30,5 +30,7 @@ router.route(`${USERS_ROUTE}/:username`)
   .patch(authMiddleware, UsersController.update)
   .delete(authMiddleware, UsersController.delete);
 
+router.route(`${USERS_ROUTE}/change-password`)
+  .post(authMiddleware, UsersController.changePassword);
 
 export const v1Router = router;

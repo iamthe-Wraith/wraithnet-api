@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import CustomError from './custom-error';
 import {
   ERROR,
+  MIN_PASSWORD_LENGTH,
   SALT_ROUNDS
 } from '../constants';
 
@@ -51,5 +52,11 @@ export default class Auth {
         reject(new CustomError(message, ERROR.INVALID_ARG));
       }
     });
+  }
+
+  static isStrongPassword (password: string) {
+    if (password.length < MIN_PASSWORD_LENGTH) return false;
+
+    return true;
   }
 }

@@ -65,4 +65,13 @@ export class UsersController implements IController {
       Response.error(err, req, res);
     }
   }
+
+  static changePassword: RequestHandler = async (req: IRequest, res) => {
+    try {
+      const user = await UsersService.changePassword(req);
+      Response.send({ user: UsersService.getSharable(user) }, req, res, Token.generate(Token.generatePayload(user)));
+    } catch (err) {
+      Response.error(err, req, res);
+    }
+  }
 }
