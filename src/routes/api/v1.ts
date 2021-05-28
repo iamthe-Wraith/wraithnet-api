@@ -2,9 +2,10 @@ import { Router } from 'express';
 
 import { authMiddleware } from '../../middleware/auth'; 
 import { UsersController } from '../../controllers/users';
-import { AUTHORIZATION_HEADER, ERROR, USERS_ROUTE } from '../../constants';
+import { AUTHORIZATION_HEADER, ERROR, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
 import CustomError from '../../utils/custom-error';
 import { Response } from '../../utils/response';
+import { UserLogController } from '../../controllers/user-log';
 
 const router = Router();
 
@@ -32,5 +33,8 @@ router.route(`${USERS_ROUTE}/:username`)
 
 router.route(`${USERS_ROUTE}/change-password`)
   .post(authMiddleware, UsersController.changePassword);
+
+router.route(USER_LOG_ROUTE)
+  .post(authMiddleware, UserLogController.create);
 
 export const v1Router = router;

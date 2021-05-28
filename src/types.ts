@@ -1,5 +1,10 @@
-import { Document } from 'mongoose';
+import { Document, Mongoose } from 'mongoose';
 import express, { Request, Response, NextFunction } from 'express';
+
+export interface IBaseResource {
+  createdAt?: Date;
+  lastModified?: Date;
+}
 
 export abstract class IController {
   abstract create?(
@@ -7,7 +12,7 @@ export abstract class IController {
     res: express.Response,
     next: express.NextFunction
   ):void;
-  }
+}
 
 export interface ICustomErrorBody {
   name: string;
@@ -53,13 +58,11 @@ export interface ITokenPayload {
   exp?:number;
 }
 
-export interface IUser extends Document {
+export interface IUser extends IBaseResource, Document {
   username: string;
   email: string;
   password: string;
   permissions: PERMISSION;
-  createdAt: Date;
-  lastModified?: Date;
   statuses: IUserStatuses; 
 }
 
@@ -78,13 +81,11 @@ export interface IUserQuery {
   'statuses.verified'?: { $in: boolean[] };
 }
 
-export interface IUserSharable {
+export interface IUserSharable extends IBaseResource {
   _id: string;
   username: string;
   email: string;
   permissions: string;
-  createdAt: Date;
-  lastModified?: Date;
   statuses: IUserStatuses;
 }
 
@@ -98,4 +99,10 @@ export enum PERMISSION { GOD = 0, ADMIN, MEMBER };
 
 export interface IFilter {
   [key: string]: any;
+}
+
+export interface IUserLogEntry extends IBaseResource {
+  owner: IUser['id'];
+  content: string;
+  tags?: string[];
 }
