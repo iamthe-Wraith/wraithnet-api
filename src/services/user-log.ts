@@ -1,3 +1,4 @@
+import { Document } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
@@ -118,5 +119,37 @@ export class UserLogService {
       owner: entry.owner,
       tags: entry.tags,
     };
+  }
+
+  static update = async (req: IRequest): Promise<IUserLogEntry> => {
+    const { content, tags } = req.body;
+    const { id } = req.params;
+
+    if (!id) throw new CustomError('no entry id found', ERROR.NOT_FOUND);
+    if (!content && !tags) throw new CustomError('no updatable content found', ERROR.NOT_FOUND);
+    if (content && typeof content !== 'string') throw asCustomError(new CustomError('invalid content', ERROR.INVALID_ARG));
+    if (tags && (!Array.isArray(tags) || tags.filter(t => typeof t !== 'string').length)) {
+      throw asCustomError(new CustomError('invalid tags. must be an array of strings', ERROR.INVALID_ARG));
+    }
+
+    const query = { owner: req.requestor.id, _id: id };
+    let entry: IUserLogEntry & Document<any, any>;
+
+    try {
+      entry = await UserLogEntry.findOne(query);
+    } catch (err) {
+      throw asCustomError(err);
+    }
+
+    if (entry) {
+      if (content) entry.content = content;
+      if (tags) entry.tags = tags;
+
+      try {
+        return UserLogService.getSharable(await entry.save());
+      } catch (err) {
+        throw asCustomError(err);
+      }
+    }
   }
 }

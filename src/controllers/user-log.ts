@@ -22,4 +22,13 @@ export class UserLogController {
       Response.error(err, req, res);
     }
   }
+
+  static update: RequestHandler = async (req: IRequest, res) => {
+    try {
+      const entry = await UserLogService.update(req);
+      Response.send(entry, req, res);
+    } catch (err) {
+      Response.error(err, req, res);
+    }
+  }
 }
