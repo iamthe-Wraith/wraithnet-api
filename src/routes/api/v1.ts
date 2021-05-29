@@ -39,6 +39,8 @@ router.route(USER_LOG_ROUTE)
   .get(authMiddleware, UserLogController.get);
 
 router.route(`${USER_LOG_ROUTE}/:id`)
-  .patch(authMiddleware, UserLogController.update);
+  .get(authMiddleware, UserLogController.get)
+  .patch(authMiddleware, UserLogController.update)
+  .delete(authMiddleware, UserLogController.delete);
 
 export const v1Router = router;

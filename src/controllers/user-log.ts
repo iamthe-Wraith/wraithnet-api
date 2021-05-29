@@ -31,4 +31,13 @@ export class UserLogController {
       Response.error(err, req, res);
     }
   }
+
+  static delete: RequestHandler = async (req: IRequest, res) => {
+    try {
+      await UserLogService.delete(req);
+      Response.send(null, req, res);
+    } catch (err) {
+      Response.error(err, req, res);
+    }
+  }
 }

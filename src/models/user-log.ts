@@ -12,6 +12,7 @@ export interface IUserLogEntry extends IBaseResource {
   owner: IUser['id'];
   content: string;
   tags?: string[];
+  markedForDeletion?: boolean;
 }
 
 const UserLogEntrySchema = new mongoose.Schema({
@@ -28,6 +29,10 @@ const UserLogEntrySchema = new mongoose.Schema({
   lastModified: {
     type: Date,
   },
+  markedForDeletion: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 export const UserLogEntry = mongoose.model<IUserLogEntry>('user-log', UserLogEntrySchema);
