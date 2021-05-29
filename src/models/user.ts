@@ -1,4 +1,6 @@
 import mongoose, { Document } from 'mongoose';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 
 import {
   EMAIL_FORMAT,
@@ -9,12 +11,14 @@ import {
   IBaseResource
 } from '../types';
 
+dayjs.extend(utc);
+
 export enum ROLE { GOD = 0, ADMIN, MEMBER };
 
 export interface IUser extends IBaseResource, Document {
   username: string;
   email: string;
-  lastModified?: string;
+  lastModified?: Date;
   password: string;
   role: ROLE;
   statuses: IUserStatuses; 
@@ -34,7 +38,7 @@ export interface IUserSharable extends IBaseResource {
   _id: string;
   username: string;
   email: string;
-  lastModified?: string;
+  lastModified?: Date;
   role: string;
   statuses: IUserStatuses;
 }
@@ -79,7 +83,7 @@ const UserSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: new Date(),
+    default: dayjs.utc().toDate(),
   },
   lastModified: {
     type: Date,

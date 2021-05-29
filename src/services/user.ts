@@ -1,4 +1,6 @@
 import express from 'express';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 
 import { IUser, IUserQuery, IUserSharable, IUserStatuses, ROLE, User } from '../models/user';
 import CustomError, { asCustomError } from '../utils/custom-error';
@@ -16,6 +18,8 @@ import {
 } from '../types';
 import { AuthService } from './auth';
 // import { getPaginationPage } from '../utils/pagination';
+
+dayjs.extend(utc);
 
 /**
  * verifies if a submitted role value is
@@ -442,7 +446,7 @@ export class UsersService {
 
         if (somethingIsBeingUpdated) {
           try {
-            user.lastModified = `${new Date()}`;
+            user.lastModified = dayjs.utc().toDate();
 
             // calling save to run validators
             await user.save();
@@ -496,14 +500,14 @@ export class UsersService {
               if (permanent) {
                 await user.remove();
               } else {
-                user.lastModified = `${new Date()}`;
+                user.lastModified = dayjs.utc().toDate();
                 user.statuses.markedForDeletion = true;
   
                 await user.save();
               }
               return 'other';
             } else if (req.requestor._id.toString() === user._id.toString() || (req.requestor.role < user.role && req.requestor.role === ROLE.ADMIN)) {
-              user.lastModified = `${new Date()}`;
+              user.lastModified = dayjs.utc().toDate();
               user.statuses.markedForDeletion = true;
 
               await user.save();
