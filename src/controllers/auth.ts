@@ -1,9 +1,8 @@
 import { RequestHandler } from 'express';
 import { Response } from '../utils/response';
 import { AuthService } from '../services/auth';
-import { IController } from '../types';
 
-export class AuthController implements IController {
+export class AuthController {
   static authenticate:RequestHandler = async (req, res) => {
     try {
       const token = await AuthService.authenticate(req);

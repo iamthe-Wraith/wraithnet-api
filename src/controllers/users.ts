@@ -4,13 +4,9 @@ import { Response } from '../utils/response';
 import Token from '../utils/token';
 import { UsersService } from '../services/user';
 import { TOKEN_REMOVE } from '../constants';
-import {
-  IController,
-  IRequest,
-  IUser
-} from '../types';
+import { IRequest } from '../types';
 
-export class UsersController implements IController {
+export class UsersController {
   static create:RequestHandler = async (req:IRequest, res) => {
     try {
       const user = await UsersService.create(req);

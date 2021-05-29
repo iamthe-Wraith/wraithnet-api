@@ -9,7 +9,8 @@ import {
   TOKEN_EXPIRATION,
   TOKEN_THRESHOLD
 } from '../constants';
-import { ITokenPayload, IUser } from '../types';
+import { ITokenPayload } from '../types';
+import { IUser } from '../models/user';
 
 export default class Token {
   static generate (payload:ITokenPayload):string {
@@ -38,7 +39,7 @@ export default class Token {
     }
   }
 
-  static generatePayload = (user:IUser):ITokenPayload => {
+  static generatePayload = (user: IUser):ITokenPayload => {
     return {
       username: user.username
     };

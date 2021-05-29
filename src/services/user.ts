@@ -1,6 +1,8 @@
 import express from 'express';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 
-import { User } from '../models/user';
+import { IUser, IUserQuery, IUserSharable, IUserStatuses, ROLE, User } from '../models/user';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import Auth from '../utils/auth';
 import {
@@ -13,33 +15,29 @@ import {
 import {
   IRequest,
   IUserGetResponse,
-  IUserQuery,
-  IUserSharable,
-  IUserStatuses,
-  IUser,
-  PERMISSION,
-  IRequestHandler
 } from '../types';
 import { AuthService } from './auth';
 // import { getPaginationPage } from '../utils/pagination';
 
+dayjs.extend(utc);
+
 /**
- * verifies if a submitted permission value is
- * a valid, registered permission.
+ * verifies if a submitted role value is
+ * a valid, registered role.
  *
- * @param {string} submittedPermissions - the permission
+ * @param {string} submittedRole - the role
  * value received in call.
  *
  * @return {[string, number]} - return tuple if is
- * valid permission value, else will return undefined.
+ * valid role value, else will return undefined.
  */
-export const isValidPermissions = (submittedPermissions:string):[string, number]|void => {
-  const newPermissions = Object.entries(PERMISSION).filter(p => {
-    return (p[0] === submittedPermissions && isNaN(parseInt(p[0])));
+export const isValidRole = (submittedRole: string):[string, number]|void => {
+  const newRole = Object.entries(ROLE).filter(p => {
+    return (p[0] === submittedRole && isNaN(parseInt(p[0])));
   });
 
-  if (newPermissions.length) {
-    return <[string, number]>newPermissions[0];
+  if (newRole.length) {
+    return <[string, number]>newRole[0];
   } else {
     return undefined;
   }
@@ -51,7 +49,7 @@ export class UsersService {
       username,
       email,
       password,
-      permissions
+      role
     } = req.body;
 
     if (!username || !email || !password) {
@@ -60,18 +58,18 @@ export class UsersService {
       throw new CustomError(msg, ERROR.NOT_FOUND);
     }
 
-    let _permissions:PERMISSION;
+    let _role: ROLE;
 
-    // only users with PERMISSION.ADMIN or more permissions are allowed to create other users
-    if (req.requestor && req.requestor.permissions >= PERMISSION.MEMBER) {
+    // only users with ROLE.ADMIN or greater role are allowed to create other users
+    if (req.requestor && req.requestor.role >= ROLE.MEMBER) {
       throw new CustomError('you are not authorized to create other users', ERROR.FORBIDDEN);
     }
 
-    if (permissions !== undefined) {
-      const results = isValidPermissions(permissions);
+    if (role !== undefined) {
+      const results = isValidRole(role);
 
       if (results) {
-        _permissions = results[1];
+        _role = results[1];
 
         if (req.requestor) {
           /*
@@ -79,30 +77,30 @@ export class UsersService {
            *
            * RULES
            * - requestor must be an admin or greater
-           * - requestor cannot grant permissions that are greater than or equal to their own
+           * - requestor cannot grant role that is greater than or equal to their own
            */
 
           if (
-            req.requestor.permissions >= PERMISSION.MEMBER ||
-            req.requestor.permissions >= _permissions
+            req.requestor.role >= ROLE.MEMBER ||
+            req.requestor.role >= _role
           ) {
-            throw new CustomError('you are not authorized to grant these permissions', ERROR.FORBIDDEN);
+            throw new CustomError('you are not authorized to grant this role', ERROR.FORBIDDEN);
           }
         } else {
           /*
            * no requestor found, means request is for a new user creating their own account
            *
-           * if is not a test, permissions cannot be greater than PERMISSION.MEMBER
+           * if is not a test, role cannot be greater than ROLE.MEMBER
            */
-          if (process.env.NODE_ENV !== 'test' && _permissions < PERMISSION.MEMBER) {
-            throw new CustomError('invalid request to create a new user - invalid permissions', ERROR.FORBIDDEN);
+          if (process.env.NODE_ENV !== 'test' && _role < ROLE.MEMBER) {
+            throw new CustomError('invalid request to create a new user - invalid role', ERROR.FORBIDDEN);
           }
         }
       } else {
-        throw new CustomError('invalid permissions value', ERROR.INVALID_ARG);
+        throw new CustomError('invalid role', ERROR.INVALID_ARG);
       }
     } else {
-      _permissions = PERMISSION.MEMBER;
+      _role = ROLE.MEMBER;
     }
 
     try {
@@ -123,7 +121,7 @@ export class UsersService {
         modifed: false,
         username,
         email,
-        permissions: _permissions
+        role: _role
       });
 
       await user.save();
@@ -141,7 +139,7 @@ export class UsersService {
     }
   }
 
-  static getCount = (query:IUserQuery):Promise<number> => new Promise((resolve, reject) => {
+  static getCount = (query: IUserQuery):Promise<number> => new Promise((resolve, reject) => {
     User.countDocuments(query, (err, count) => {
       if (err) {
         reject(new CustomError(err.message));
@@ -151,14 +149,14 @@ export class UsersService {
     });
   });
 
-  static getSharable (user:IUser, requestor?:IUser):IUserSharable {
+  static getSharable (user:IUser, requestor?:IUser): IUserSharable {
     const statuses = <IUserStatuses>{
       verified: user.statuses.verified
     };
 
     if (
       requestor &&
-      requestor.permissions <= PERMISSION.ADMIN
+      requestor.role <= ROLE.ADMIN
     ) {
       statuses.banned = user.statuses.banned;
       statuses.markedForDeletion = user.statuses.markedForDeletion;
@@ -168,7 +166,7 @@ export class UsersService {
       _id: user._id,
       username: user.username,
       email: user.email,
-      permissions: PERMISSION[user.permissions],
+      role: ROLE[user.role],
       createdAt: user.createdAt,
       lastModified: user.lastModified,
       statuses
@@ -220,7 +218,7 @@ export class UsersService {
     }
 
     if (req.requestor) {
-      if (req.requestor.permissions >= PERMISSION.MEMBER) {
+      if (req.requestor.role >= ROLE.MEMBER) {
         query['statuses.banned'] = { $in: [false] };
         query['statuses.markedForDeletion'] = { $in: [false] };
       } else {
@@ -279,13 +277,13 @@ export class UsersService {
       username: _username,
       email,
       password,
-      permissions,
+      role,
       statuses
     } = <{
       username?: string;
       email?: string;
       password?: string;
-      permissions?: string;
+      role?: string;
       statuses?: IUserStatuses;
     }>req.body;
 
@@ -294,7 +292,7 @@ export class UsersService {
       req.requestor &&
       (
         req.requestor.username === username ||
-        req.requestor.permissions <= PERMISSION.ADMIN
+        req.requestor.role <= ROLE.ADMIN
       )
     ) {
       /*
@@ -357,29 +355,29 @@ export class UsersService {
           somethingIsBeingUpdated = true;
         }
 
-        if (permissions) {
-          // new permissions found...checking if valid permissions received
-          const newPermissions = isValidPermissions(permissions);
+        if (role) {
+          // new role found...checking if valid role received
+          const newRole = isValidRole(role);
 
-          if (newPermissions) {
-            // is valid permissions...updated permissions value
+          if (newRole) {
+            // is valid role...updated role value
 
             /*
              * requestor must have admin permssions (or greater) and can
-             * only grant permissions equal to or less than their own
+             * only grant role equal to or less than their own
              */
             if (
               req.requestor.username !== username &&
-              req.requestor.permissions <= PERMISSION.ADMIN &&
-              req.requestor.permissions <= newPermissions[1]
+              req.requestor.role <= ROLE.ADMIN &&
+              req.requestor.role <= newRole[1]
             ) {
-              user.permissions = <PERMISSION>newPermissions[1];
+              user.role = <ROLE>newRole[1];
               somethingIsBeingUpdated = true;
             } else {
-              throw new CustomError('you are not authorized to grant these permissions to this user', ERROR.FORBIDDEN);
+              throw new CustomError('you are not authorized to grant this role to this user', ERROR.FORBIDDEN);
             }
           } else {
-            throw new CustomError('invalid permissions received', ERROR.INVALID_ARG);
+            throw new CustomError('invalid role received', ERROR.INVALID_ARG);
           }
         }
 
@@ -401,14 +399,14 @@ export class UsersService {
             // new banned status found
 
             /*
-             * requestor cannot ban themselves, must have admin permissions
-             * (or greater), and cannot ban a user that has greater permissions
+             * requestor cannot ban themselves, must have admin role
+             * (or greater), and cannot ban a user that has greater role
              * than themselves.
              */
             if (
               req.requestor.username !== username &&
-              req.requestor.permissions <= PERMISSION.ADMIN &&
-              req.requestor.permissions <= user.permissions
+              req.requestor.role <= ROLE.ADMIN &&
+              req.requestor.role <= user.role
             ) {
               user.statuses.banned = !!banned;
               somethingIsBeingUpdated = true;
@@ -425,14 +423,14 @@ export class UsersService {
             // new markedForDeletion status found
 
             /*
-             * requestor must have admin permissions (or greater), and cannot
-             * mark a user for deletion that has greater permissions than
+             * requestor must have admin role (or greater), and cannot
+             * mark a user for deletion that has greater role than
              * themselves
              */
             if (
               req.requestor.username !== username &&
-              req.requestor.permissions <= PERMISSION.ADMIN &&
-              req.requestor.permissions <= user.permissions
+              req.requestor.role <= ROLE.ADMIN &&
+              req.requestor.role <= user.role
             ) {
               user.statuses.markedForDeletion = !!markedForDeletion;
               somethingIsBeingUpdated = true;
@@ -448,7 +446,7 @@ export class UsersService {
 
         if (somethingIsBeingUpdated) {
           try {
-            user.lastModified = new Date();
+            user.lastModified = dayjs.utc().toDate();
 
             // calling save to run validators
             await user.save();
@@ -498,18 +496,18 @@ export class UsersService {
       if (user) {
         if (req.requestor) {
           try {
-            if (req.requestor.permissions === PERMISSION.GOD) {
+            if (req.requestor.role === ROLE.GOD) {
               if (permanent) {
                 await user.remove();
               } else {
-                user.lastModified = new Date();
+                user.lastModified = dayjs.utc().toDate();
                 user.statuses.markedForDeletion = true;
   
                 await user.save();
               }
               return 'other';
-            } else if (req.requestor._id.toString() === user._id.toString() || (req.requestor.permissions < user.permissions && req.requestor.permissions === PERMISSION.ADMIN)) {
-              user.lastModified = new Date();
+            } else if (req.requestor._id.toString() === user._id.toString() || (req.requestor.role < user.role && req.requestor.role === ROLE.ADMIN)) {
+              user.lastModified = dayjs.utc().toDate();
               user.statuses.markedForDeletion = true;
 
               await user.save();
