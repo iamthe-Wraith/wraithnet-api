@@ -15,6 +15,11 @@ export interface IUserLogEntry extends IBaseResource {
   markedForDeletion?: boolean;
 }
 
+export interface IUserLogEntries {
+  count: number;
+  entries: IUserLogEntry[];
+}
+
 const UserLogEntrySchema = new mongoose.Schema({
   owner: {
     type: Schema.Types.ObjectId,

@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import { ERROR } from "../constants";
-import { IUserLogEntry, UserLogEntry } from "../models/user-log";
+import { IUserLogEntries, IUserLogEntry, UserLogEntry } from "../models/user-log";
 import { IRequest } from "../types";
 import { isValidDate } from "../utils";
 import CustomError, { asCustomError } from "../utils/custom-error";
@@ -34,7 +34,7 @@ export class UserLogService {
     }
   }
 
-  static async get (req: IRequest, returnFullObject = false): Promise<IUserLogEntry[]> {
+  static async get (req: IRequest, returnFullObject = false): Promise<IUserLogEntry | IUserLogEntries> {
     const {
       text,
       tags,
@@ -134,8 +134,19 @@ export class UserLogService {
         .limit(_pageSize)
         .sort({ _id: 'desc' })
         .exec();
-
-      return results;
+   
+      if (id) {
+        if (results.length) {
+          return results[0];
+        } else {
+          throw new CustomError(`entry with id: ${id} not found`, ERROR.NOT_FOUND);
+        }
+      } else {
+        return {
+          entries: results,
+          count: await UserLogEntry.countDocuments(query)
+        };
+      }
     } catch (err) {
       throw asCustomError(err);
     }
