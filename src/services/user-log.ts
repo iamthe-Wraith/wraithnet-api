@@ -41,18 +41,34 @@ export class UserLogService {
       created,
       createdBefore,
       createdAfter,
+      page,
+      pageSize,
     } = (req.query as {
       text: string;
       tags: string;
       created: string;
       createdAfter: string;
       createdBefore: string;
+      page: string;
+      pageSize: string;
     });  
     const { id } = req.params;
 
     const query: any = {
       $and: [{ owner: req.requestor.id }, { markedForDeletion: false }],
     };
+
+    let _page = 0;
+    if (page) {
+      _page = parseInt(page);
+      if (isNaN(_page)) throw new CustomError('invalid page found', ERROR.INVALID_ARG);
+    }
+
+    let _pageSize = 25;
+    if (pageSize) {
+      _pageSize = parseInt(pageSize);
+      if (isNaN(_pageSize)) throw new CustomError('invalid pageSize found', ERROR.INVALID_ARG);
+    }
 
     if (id) {
       if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
@@ -112,18 +128,15 @@ export class UserLogService {
     }
 
     try {
-      const results = await UserLogEntry.find(query, restrictedProperties);
-
-      console.log(results);
+      const results = await UserLogEntry
+        .find(query, restrictedProperties)
+        .skip(_page * _pageSize)
+        .limit(_pageSize)
+        .sort({ _id: 'desc' })
+        .exec();
 
       return results;
     } catch (err) {
-      console.log({...err});
-      if (err.kind) {
-
-      } else {
-
-      }
       throw asCustomError(err);
     }
   }
