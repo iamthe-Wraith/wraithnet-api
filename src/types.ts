@@ -1,8 +1,8 @@
-import express, { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { IUser } from './models/user';
 
 export interface IBaseResource {
-  createdAt?: string;
+  createdAt?: Date;
 }
 
 export interface ICustomErrorBody {

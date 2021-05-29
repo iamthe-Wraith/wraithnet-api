@@ -1,6 +1,6 @@
 import express from "express";
 import { AUTH_ROUTE, ERROR } from "../constants";
-import { IUser } from "../types";
+import { IUser } from "../models/user";
 import Auth from "../utils/auth";
 import CustomError from "../utils/custom-error";
 import Token from "../utils/token";
@@ -13,7 +13,7 @@ export class AuthService {
       password:string;
     }>req.body;
   
-    let user:IUser;
+    let user: IUser;
   
     if (username && password) {
       const userRequest = <express.Request>{

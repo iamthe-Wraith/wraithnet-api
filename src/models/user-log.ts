@@ -1,9 +1,14 @@
 import mongoose, { Schema } from 'mongoose';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 
-import { IBaseResource } from '../types';
+import { IBaseResource, IRegexQuery } from '../types';
 import { IUser } from './user';
 
+dayjs.extend(utc);
+
 export interface IUserLogEntry extends IBaseResource {
+  _id: IUser['id'];
   owner: IUser['id'];
   content: string;
   tags?: string[];
@@ -18,7 +23,7 @@ const UserLogEntrySchema = new mongoose.Schema({
   tags: [String],
   createdAt: {
     type: Date,
-    default: new Date(),
+    default: dayjs.utc().toDate(),
   },
   lastModified: {
     type: Date,

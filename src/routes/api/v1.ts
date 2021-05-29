@@ -35,6 +35,7 @@ router.route(`${USERS_ROUTE}/change-password`)
   .post(authMiddleware, UsersController.changePassword);
 
 router.route(USER_LOG_ROUTE)
-  .post(authMiddleware, UserLogController.create);
+  .post(authMiddleware, UserLogController.create)
+  .get(authMiddleware, UserLogController.get);
 
 export const v1Router = router;

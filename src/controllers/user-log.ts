@@ -13,4 +13,13 @@ export class UserLogController {
       Response.error(err, req, res);
     }
   }
+
+  static get: RequestHandler = async (req: IRequest, res) => {
+    try {
+      const entries = await UserLogService.get(req);
+      Response.send(entries, req, res);
+    } catch (err) {
+      Response.error(err, req, res);
+    }
+  }
 }
