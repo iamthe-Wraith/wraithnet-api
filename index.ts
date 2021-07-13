@@ -7,8 +7,8 @@ import mongoose from 'mongoose';
 import { apiRouter } from './src/routes/api';
 import { authRouter } from './src/routes/auth';
 import { serviceMiddleware } from './src/middleware/service';
-import CustomError from './src/utils/custom-error';
-import { ERROR } from './src/constants';
+import { ADMIN_ROUTE, ERROR } from './src/constants';
+import { adminRouter } from './src/routes/admin';
 
 dotenv.config();
 
@@ -33,6 +33,7 @@ app.use(express.json())
 app.use(serviceMiddleware);
 
 app.use('/api', apiRouter);
+app.use(ADMIN_ROUTE, adminRouter);
 app.use('/auth', authRouter);
 
 app.use((_, res) => {

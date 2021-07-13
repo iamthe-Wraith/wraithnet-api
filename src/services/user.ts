@@ -173,7 +173,7 @@ export class UsersService {
     };
   }
 
-  static async get (req:IRequest): Promise<IUserGetResponse> {
+  static async get (req: IRequest): Promise<IUserGetResponse> {
     const query = <IUserQuery>{};
 
     const { username } = req.params;
