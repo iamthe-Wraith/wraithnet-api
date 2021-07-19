@@ -35,7 +35,7 @@ export interface IUserQuery {
 }
 
 export interface IUserSharable extends IBaseResource {
-  _id: string;
+  id: string;
   username: string;
   email: string;
   lastModified?: Date;

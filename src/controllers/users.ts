@@ -7,67 +7,76 @@ import { TOKEN_REMOVE } from '../constants';
 import { IRequest } from '../types';
 
 export class UsersController {
-  static create:RequestHandler = async (req:IRequest, res) => {
-    try {
-      const user = await UsersService.create(req);
+    static create:RequestHandler = async (req:IRequest, res) => {
+        try {
+        const user = await UsersService.create(req);
 
-      if (!req.requestor) {
-        Response.send({ user: UsersService.getSharable(user) }, req, res, Token.generate(Token.generatePayload(user)));
-      } else {
-        Response.send({ user: UsersService.getSharable(user, req.requestor) }, req, res);
-      }
-    } catch (err) {
-      Response.error(err, req, res);
+        if (!req.requestor) {
+            Response.send({ user: UsersService.getSharable(user) }, req, res, Token.generate(Token.generatePayload(user)));
+        } else {
+            Response.send({ user: UsersService.getSharable(user, req.requestor) }, req, res);
+        }
+        } catch (err) {
+        Response.error(err, req, res);
+        }
     }
-  }
 
-  static delete:RequestHandler = async (req:IRequest, res) => {
-    try {
-      const result = await UsersService.delete(req);
+    static delete:RequestHandler = async (req:IRequest, res) => {
+        try {
+        const result = await UsersService.delete(req);
 
-      if (result === 'self') {
-        Response.send(null, req, res, TOKEN_REMOVE);
-      } else {
-        Response.send(null, req, res);
-      }
-    } catch (err) {
-      Response.error(err, req, res);
+        if (result === 'self') {
+            Response.send(null, req, res, TOKEN_REMOVE);
+        } else {
+            Response.send(null, req, res);
+        }
+        } catch (err) {
+        Response.error(err, req, res);
+        }
+    };
+
+    static get:RequestHandler = async (req:IRequest, res) => {
+        try {
+        const results = await UsersService.get(req);
+        const { username } = req.params;
+
+        if (username) {
+            Response.send({ user: UsersService.getSharable(results.users[0], req.requestor) }, req, res);
+        } else {
+            Response.send({
+            count: results.count,
+            users: results.users.map(user => UsersService.getSharable(user, req.requestor))
+            }, req, res);
+        }
+        } catch (err) {
+        Response.error(err, req, res);
+        }
     }
-  };
 
-  static get:RequestHandler = async (req:IRequest, res) => {
-    try {
-      const results = await UsersService.get(req);
-      const { username } = req.params;
+    static getProfile: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const profile = UsersService.getSharable(req.requestor);
+            Response.send(profile, req, res);
+        } catch (err) {
+            Response.error(err, req, res);
+        }
+    }
 
-      if (username) {
+    static update:RequestHandler = async (req:IRequest, res) => {
+        try {
+        const results = await UsersService.update(req);
         Response.send({ user: UsersService.getSharable(results.users[0], req.requestor) }, req, res);
-      } else {
-        Response.send({
-          count: results.count,
-          users: results.users.map(user => UsersService.getSharable(user, req.requestor))
-        }, req, res);
-      }
-    } catch (err) {
-      Response.error(err, req, res);
+        } catch (err) {
+        Response.error(err, req, res);
+        }
     }
-  }
 
-  static update:RequestHandler = async (req:IRequest, res) => {
-    try {
-      const results = await UsersService.update(req);
-      Response.send({ user: UsersService.getSharable(results.users[0], req.requestor) }, req, res);
-    } catch (err) {
-      Response.error(err, req, res);
+    static changePassword: RequestHandler = async (req: IRequest, res) => {
+        try {
+        const user = await UsersService.changePassword(req);
+        Response.send({ user: UsersService.getSharable(user) }, req, res, Token.generate(Token.generatePayload(user)));
+        } catch (err) {
+        Response.error(err, req, res);
+        }
     }
-  }
-
-  static changePassword: RequestHandler = async (req: IRequest, res) => {
-    try {
-      const user = await UsersService.changePassword(req);
-      Response.send({ user: UsersService.getSharable(user) }, req, res, Token.generate(Token.generatePayload(user)));
-    } catch (err) {
-      Response.error(err, req, res);
-    }
-  }
 }

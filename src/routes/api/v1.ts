@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { authMiddleware } from '../../middleware/auth'; 
 import { UsersController } from '../../controllers/users';
-import { AUTHORIZATION_HEADER, ERROR, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
+import { AUTHORIZATION_HEADER, ERROR, PROFILE_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
 import CustomError from '../../utils/custom-error';
 import { Response } from '../../utils/response';
 import { UserLogController } from '../../controllers/user-log';
@@ -42,5 +42,8 @@ router.route(`${USER_LOG_ROUTE}/:id`)
   .get(authMiddleware, UserLogController.get)
   .patch(authMiddleware, UserLogController.update)
   .delete(authMiddleware, UserLogController.delete);
+
+router.route(PROFILE_ROUTE)
+  .get(authMiddleware, UsersController.getProfile);
 
 export const v1Router = router;

@@ -3,6 +3,7 @@ import { RequestHandler } from 'express';
 import { Response } from '../utils/response';
 import { IRequest } from '../types';
 import { UserLogService } from '../services/user-log';
+import { UsersService } from '../services/user';
 
 export class UserLogController {
   static create:RequestHandler = async (req:IRequest, res) => {
