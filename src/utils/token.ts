@@ -1,7 +1,5 @@
 import jwt from 'jsonwebtoken';
-import fs from 'fs';
 
-import { config } from '../../config';
 import CustomError from '../utils/custom-error';
 import {
   ERROR,
@@ -16,7 +14,7 @@ export default class Token {
   static generate (payload:ITokenPayload):string {
     if (payload) {
       try {
-        const cert = fs.readFileSync(config.private_key);
+        const cert = process.env.PRIVATE_KEY.split('\\n').join('\n');
 
         return jwt.sign(
           payload,
@@ -75,7 +73,7 @@ export default class Token {
     return new Promise((resolve, reject) => {
       if (token) {
         try {
-          const secret = fs.readFileSync(config.private_key);
+          const secret = process.env.PRIVATE_KEY.split('\\n').join('\n');
 
           jwt.verify(token, secret, { algorithms: [<jwt.Algorithm>TOKEN_ALGORITHM] }, (err:Error|null, payload?:string|object):void => {
             if (err) {
