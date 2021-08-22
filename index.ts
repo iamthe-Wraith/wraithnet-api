@@ -11,13 +11,10 @@ import { adminRouter } from './src/routes/admin';
 
 dotenv.config();
 
+const port = process.env.PORT || 3001;
 const app = express();
 
-mongoose.connection.on('open', () => {
-    if (process.env.NODE_ENV !== 'test') {
-        console.log('[+] database ready');
-    }
-});
+mongoose.connection.on('open', () => console.log('[+] database ready'));
 mongoose.connection.on('error', error => console.log(`[-] database error - ${error.message}`));
 mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_URI}`, {
     useNewUrlParser: true,
@@ -40,8 +37,4 @@ app.use(AUTH_ROUTE, authRouter);
 
 app.use((_, res) => res.status(404).send('Not found'));
 
-const port = process.env.PORT || 3001;
-
-app.listen(port, () => {
-    console.log(`[+] ${process.env.NODE_ENV} server ready and waiting on port ${port}`);
-});
+app.listen(port, () => console.log(`[+] ${process.env.NODE_ENV} server ready and waiting on port ${port}`));
