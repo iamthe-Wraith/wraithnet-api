@@ -19,7 +19,7 @@ router.route(USERS_ROUTE)
       authMiddleware(req, res, next);
     } else {
       // is request by new user to create account...this is not supported currently.
-      // next();
+      next();
 
       Response.error(new CustomError('You are not authorized to make this request.', ERROR.UNAUTHORIZED), req, res);
     }
