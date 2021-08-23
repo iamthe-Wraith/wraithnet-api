@@ -23,6 +23,7 @@ export class UserLogService {
 
     try {
       const entry = new UserLogEntry({
+        createdAt: dayjs().toDate(),
         content,
         tags,
         owner: req.requestor.id,
