@@ -23,7 +23,7 @@ export class UserLogService {
 
     try {
       const entry = new UserLogEntry({
-        createdAt: dayjs().toDate(),
+        createdAt: dayjs.utc().format(),
         content,
         tags,
         owner: req.requestor.id,
@@ -91,9 +91,13 @@ export class UserLogService {
 
       if (created) {
         if (!isValidDate(created)) throw new CustomError('invalid created date', ERROR.INVALID_ARG);
-        const date = dayjs.utc(created);
-        query.$and.push({ createdAt: { $gte: dayjs.utc(date).hour(0).minute(0).second(0).toDate() }});
-        query.$and.push({ createdAt: { $lte: dayjs.utc(date).hour(23).minute(59).second(59).toDate() }});
+        let start = dayjs(created).hour(0).minute(0).second(0)
+        start = start.utc();
+        let end = dayjs(created).hour(23).minute(59).second(59);
+        end = end.utc();
+
+        query.$and.push({ createdAt: { $gte: start.toDate() }});
+        query.$and.push({ createdAt: { $lte: end.toDate() }});
       } else if (createdBefore || createdAfter) {
         let _createdBefore: dayjs.Dayjs;
         let _createdAfter: dayjs.Dayjs;
