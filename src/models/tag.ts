@@ -7,16 +7,23 @@ import { IUser } from './user';
 
 dayjs.extend(utc);
 
-export interface ITag extends IBaseResource {
-    _id: string;
+export interface IBaseTag extends IBaseResource {
     owner: IUser['id'];
     text: string;
     markedForDeletion?: boolean;
 }
 
+export interface ITag extends IBaseTag {
+    _id: string;
+}
+
+export interface ITagSharable extends IBaseTag {
+    id: string;
+}
+
 export interface ITags {
     count: number;
-    tags: ITag[];
+    tags: (ITag | ITagSharable)[];
 }
 
 const TagSchema = new mongoose.Schema({
@@ -27,6 +34,7 @@ const TagSchema = new mongoose.Schema({
     text: {
         required: true,
         type: String,
+        unique: true,
     },
     createdAt: {
         type: Date,

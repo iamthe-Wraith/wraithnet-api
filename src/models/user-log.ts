@@ -2,23 +2,31 @@ import mongoose, { Schema, SchemaType } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
-import { Tag, ITag } from './tag';
+import { Tag, ITag, ITagSharable } from './tag';
 import { IBaseResource } from '../types';
 import { IUser } from './user';
 
 dayjs.extend(utc);
 
-export interface IUserLogEntry extends IBaseResource {
-    _id: string;
+export interface IUserLogEntryBase extends IBaseResource {
     owner: IUser['id'];
     content: string;
-    tags?: ITag[];
     markedForDeletion?: boolean;
+}
+
+export interface IUserLogEntry extends IUserLogEntryBase {
+    _id: string;
+    tags?: ITag[];
+}
+
+export interface IUserLogEntrySharable extends IUserLogEntryBase {
+    id: string;
+    tags?: ITagSharable[];
 }
 
 export interface IUserLogEntries {
     count: number;
-    entries: IUserLogEntry[];
+    entries: IUserLogEntrySharable[];
 }
 
 const UserLogEntrySchema = new mongoose.Schema({
@@ -27,10 +35,10 @@ const UserLogEntrySchema = new mongoose.Schema({
         ref: 'user'
     },
     content: String,
-    tags: {
+    tags: [{
         type: Schema.Types.ObjectId,
         ref: 'tag',
-    },
+    }],
     createdAt: {
         type: Date,
         default: dayjs.utc().format(),
