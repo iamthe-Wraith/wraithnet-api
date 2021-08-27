@@ -15,7 +15,7 @@ dayjs.extend(utc);
 
 export enum ROLE { GOD = 0, ADMIN, MEMBER };
 
-export interface IUser extends IBaseResource, Document {
+export interface IUser extends IBaseResource, Document<string> {
   username: string;
   email: string;
   lastModified?: Date;
@@ -38,7 +38,6 @@ export interface IUserSharable extends IBaseResource {
   id: string;
   username: string;
   email: string;
-  lastModified?: Date;
   role: string;
   statuses: IUserStatuses;
 }
