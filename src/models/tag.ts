@@ -23,7 +23,7 @@ export interface ITagSharable extends IBaseTag {
 
 export interface ITags {
     count: number;
-    tags: (ITag | ITagSharable)[];
+    tags: ITag[];
 }
 
 const TagSchema = new mongoose.Schema({

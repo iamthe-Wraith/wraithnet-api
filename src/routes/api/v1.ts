@@ -2,10 +2,11 @@ import { Router } from 'express';
 
 import { authMiddleware } from '../../middleware/auth'; 
 import { UsersController } from '../../controllers/users';
-import { AUTHORIZATION_HEADER, ERROR, PROFILE_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
+import { AUTHORIZATION_HEADER, ERROR, PROFILE_ROUTE, TAGS_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
 import CustomError from '../../utils/custom-error';
 import { Response } from '../../utils/response';
 import { UserLogController } from '../../controllers/user-log';
+import { TagsController } from '../../controllers/tags';
 
 const router = Router();
 
@@ -45,5 +46,14 @@ router.route(`${USER_LOG_ROUTE}/:id`)
 
 router.route(PROFILE_ROUTE)
     .get(authMiddleware, UsersController.getProfile);
+
+router.route(TAGS_ROUTE)
+    .post(authMiddleware, TagsController.create)
+    .get(authMiddleware, TagsController.get);
+
+router.route(`${TAGS_ROUTE}/:id`)
+    .get(authMiddleware, TagsController.get)
+    .delete(authMiddleware, TagsController.delete)
+    .patch(authMiddleware, TagsController.update);
 
 export const v1Router = router;

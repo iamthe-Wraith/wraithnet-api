@@ -8,8 +8,10 @@ import { IUserLogEntries, IUserLogEntry, IUserLogEntrySharable, UserLogEntry } f
 import { IRequest } from "../types";
 import { isValidDate } from "../utils";
 import CustomError, { asCustomError } from "../utils/custom-error";
-import { ITag, Tag } from '../models/tag';
-import { TagService } from './tags';
+import { ITag, ITags, Tag } from '../models/tag';
+import { TagsService } from './tags';
+import express from 'express';
+import { IUser } from '../models/user';
 
 dayjs.extend(utc);
 
@@ -24,22 +26,17 @@ export class UserLogService {
         }
 
         try {
-            const _tags = tags.map(t => new Tag({
-                text: t,
-                owner: req.requestor.id,
-            }));
-
-            await Promise.all(_tags.map(t => t.save()));
+            const resolvedTags = await UserLogService.createTagsForEntry(tags, req.requestor);
 
             let entry = new UserLogEntry({
                 content,
-                tags: _tags.map(t => t._id),
+                tags: resolvedTags.map(t => (t as ITag)._id),
                 owner: req.requestor.id,
             });
 
             await entry.save();
             entry.toObject();
-            entry.tags = _tags;
+            entry.tags = resolvedTags as ITag[];
 
             return UserLogService.getSharable(entry);
         } catch (err) {
@@ -47,23 +44,49 @@ export class UserLogService {
         }
     }
 
+    static async createTagsForEntry (tags: string[], requestor: IUser): Promise<ITag[]> {
+        const _tags = tags.map(async (t) => {
+            const request = <IRequest>{
+                body: {},
+                query: {},
+                params: {},
+                requestor: requestor,
+            };
+
+            request.query.text = t;
+            request.body.text = t;
+
+            const existingTag = await TagsService.get(request);
+
+            if (existingTag) {
+                if (Array.isArray((existingTag as ITags)?.tags) && (existingTag as ITags).tags.length) {
+                    return (existingTag as ITags).tags[0];
+                }
+            }
+
+            return await TagsService.create(request);
+        });
+
+        return await Promise.all(_tags);
+    }
+
     static async get (req: IRequest, returnFullObject = false): Promise<IUserLogEntry | IUserLogEntries> {
         const {
-        text,
-        tags,
-        created,
-        createdBefore,
-        createdAfter,
-        page,
-        pageSize,
+            text,
+            tags,
+            created,
+            createdBefore,
+            createdAfter,
+            page,
+            pageSize,
         } = (req.query as {
-        text: string;
-        tags: string;
-        created: string;
-        createdAfter: string;
-        createdBefore: string;
-        page: string;
-        pageSize: string;
+            text: string;
+            tags: string;
+            created: string;
+            createdAfter: string;
+            createdBefore: string;
+            page: string;
+            pageSize: string;
         });  
         const { id } = req.params;
 
@@ -176,7 +199,7 @@ export class UserLogService {
             content: entry.content,
             createdAt: entry.createdAt,
             owner: entry.owner,
-            tags: entry?.tags.map(t => TagService.getSharable(t)) ?? [],
+            tags: entry?.tags.map(t => TagsService.getSharable(t)) ?? [],
         };
     }
 
@@ -203,34 +226,8 @@ export class UserLogService {
         }
 
         if (entry) {
-            let _tags: ITag[] = [];
-
             if (content) entry.content = content;
-            if (tags) {
-                // retrieve tag if it already exists
-                // otherwise create it
-                for(let i = 0; i < tags.length; i++) {
-                    const t = await Tag.findOne({
-                        owner: req.requestor.id,
-                        text: tags[i],
-                    });
-
-                    if (t) {
-                        _tags.push(t);
-                    } else {
-                        const newTag = new Tag({
-                            owner: req.requestor.id,
-                            text: tags[i],
-                        });
-
-                        await newTag.save();
-
-                        _tags.push(newTag);
-                    }
-                }
-
-                entry.tags = _tags;
-            }
+            if (tags) entry.tags = await UserLogService.createTagsForEntry(tags, req.requestor);
 
             try {
                 return UserLogService.getSharable(await entry.save());
