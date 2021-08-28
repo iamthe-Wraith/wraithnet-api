@@ -26,7 +26,7 @@ export interface IUserLogEntrySharable extends IUserLogEntryBase {
 
 export interface IUserLogEntries {
     count: number;
-    entries: IUserLogEntrySharable[];
+    entries: (IUserLogEntry | IUserLogEntrySharable)[];
 }
 
 const UserLogEntrySchema = new mongoose.Schema({

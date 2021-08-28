@@ -16,7 +16,7 @@ import { IUser } from '../models/user';
 dayjs.extend(utc);
 
 export class UserLogService {
-    static async create (req: IRequest): Promise<IUserLogEntrySharable> {
+    static async create (req: IRequest): Promise<IUserLogEntry> {
         const { content, tags = [] } = (req.body as { content: string, tags: string[] });
 
         if (!content) throw asCustomError(new CustomError('content is required', ERROR.INVALID_ARG));
@@ -38,7 +38,7 @@ export class UserLogService {
             entry.toObject();
             entry.tags = resolvedTags as ITag[];
 
-            return UserLogService.getSharable(entry);
+            return entry;
         } catch (err) {
             throw asCustomError(err);      
         }
@@ -184,7 +184,7 @@ export class UserLogService {
                 }
             } else {
                 return {
-                    entries: results.map(r => UserLogService.getSharable(r)),
+                    entries: results,
                     count: await UserLogEntry.countDocuments(query)
                 };
             }
@@ -203,7 +203,7 @@ export class UserLogService {
         };
     }
 
-    static update = async (req: IRequest): Promise<IUserLogEntrySharable> => {
+    static update = async (req: IRequest): Promise<IUserLogEntry> => {
         const { content, tags } = req.body;
         const { id } = req.params;
 
@@ -230,7 +230,7 @@ export class UserLogService {
             if (tags) entry.tags = await UserLogService.createTagsForEntry(tags, req.requestor);
 
             try {
-                return UserLogService.getSharable(await entry.save());
+                return await entry.save();
             } catch (err) {
                 throw asCustomError(err);
             }
