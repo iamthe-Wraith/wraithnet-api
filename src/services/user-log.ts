@@ -135,11 +135,11 @@ export class UserLogService {
                     ]
                 })
             } else if (tags) {
-                if (!Array.isArray(tags) || tags.filter(t => typeof t !== 'string').length) {
+                if (typeof tags !== 'string') {
                     throw new CustomError('invalid tags', ERROR.INVALID_ARG);
                 }
 
-                query.$and.push({ $or: tags.map(t => ({ tags: t })) });
+                query.$and.push({ $or: tags.split(',').map(t => ({ tags: t })) });
             }
 
             if (created) {
