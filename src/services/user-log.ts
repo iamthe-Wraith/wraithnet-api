@@ -59,7 +59,9 @@ export class UserLogService {
             const existingTag = await TagsService.get(request);
 
             if (existingTag) {
-                if (Array.isArray((existingTag as ITags)?.tags) && (existingTag as ITags).tags.length) {
+                if (Array.isArray((existingTag as ITags)?.tags) &&
+                    (existingTag as ITags).tags.length &&
+                    (existingTag as ITags).tags.filter(existingTag => existingTag.text === t).length) {
                     return (existingTag as ITags).tags[0];
                 }
             }
