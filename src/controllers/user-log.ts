@@ -22,11 +22,11 @@ export class UserLogController {
       const entries = await UserLogService.get(req);
       if (Array.isArray((entries as IUserLogEntries)?.entries)) {
           const result = {
-              ...entries,
-              entries: (entries as IUserLogEntries).entries.map(e => UserLogService.getSharable((e as IUserLogEntry))),
-          }
+            ...entries,
+            entries: (entries as IUserLogEntries).entries.map(e => UserLogService.getSharable((e as IUserLogEntry))),
+        }
 
-          Response.send(result, req, res);
+        Response.send(result, req, res);
       } else {
         Response.send(UserLogService.getSharable((entries as IUserLogEntry)), req, res);
       }

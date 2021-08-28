@@ -74,6 +74,8 @@ export class UserLogService {
         const {
             text,
             tags,
+            noTags,
+            anyTags,
             created,
             createdBefore,
             createdAfter,
@@ -82,6 +84,8 @@ export class UserLogService {
         } = (req.query as {
             text: string;
             tags: string;
+            noTags: string;
+            anyTags: string;
             created: string;
             createdAfter: string;
             createdBefore: string;
@@ -116,9 +120,23 @@ export class UserLogService {
                 query.$and.push({ content: { $regex: text }});
             }
 
-            if (tags) {
+            if (noTags === 'true') {
+                query.$and.push({
+                    $or: [
+                        { tags: null },
+                        { "tags.0": { $exists: false } },
+                    ]
+                });
+            } else if (anyTags === 'true') {
+                query.$and.push({
+                    $and: [
+                        { "tags.0": { $exists: true } },
+                        { "tags.0": { $ne: null } },
+                    ]
+                })
+            } else if (tags) {
                 if (!Array.isArray(tags) || tags.filter(t => typeof t !== 'string').length) {
-                throw new CustomError('invalid tags', ERROR.INVALID_ARG);
+                    throw new CustomError('invalid tags', ERROR.INVALID_ARG);
                 }
 
                 query.$and.push({ $or: tags.map(t => ({ tags: t })) });
@@ -137,18 +155,18 @@ export class UserLogService {
                 let _createdBefore: dayjs.Dayjs;
                 let _createdAfter: dayjs.Dayjs;
                 if (createdBefore) {
-                _createdBefore = dayjs.utc(createdBefore).hour(23).minute(59).second(59);
+                    _createdBefore = dayjs.utc(createdBefore).hour(23).minute(59).second(59);
                 if (!_createdBefore.isValid()) throw new CustomError('invalid createdBefore date', ERROR.INVALID_ARG);
                 
                 }
 
                 if (createdAfter) {
-                _createdAfter = dayjs.utc(createdAfter).hour(0).minute(0).second(0);
-                if (!_createdAfter.isValid()) throw new CustomError('invalid createdAfter date', ERROR.INVALID_ARG);
+                    _createdAfter = dayjs.utc(createdAfter).hour(0).minute(0).second(0);
+                    if (!_createdAfter.isValid()) throw new CustomError('invalid createdAfter date', ERROR.INVALID_ARG);
                 }
 
                 if (_createdBefore && _createdAfter && _createdBefore.isBefore(_createdAfter)) {
-                throw  new CustomError('createdBefore date must be after createdAfter date');
+                    throw  new CustomError('createdBefore date must be after createdAfter date');
                 }
 
                 if (_createdAfter) query.$and.push({ createdAt: { $gte: _createdAfter.toDate() } });
@@ -199,7 +217,7 @@ export class UserLogService {
             content: entry.content,
             createdAt: entry.createdAt,
             owner: entry.owner,
-            tags: entry?.tags.map(t => TagsService.getSharable(t)) ?? [],
+            tags: entry?.tags.filter(t => !!t).map(t => (TagsService.getSharable(t))) ?? [],
         };
     }
 
