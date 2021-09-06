@@ -41,7 +41,6 @@ const UserLogEntrySchema = new mongoose.Schema({
     }],
     createdAt: {
         type: Date,
-        default: dayjs.utc().format(),
     },
     lastModified: {
         type: Date,

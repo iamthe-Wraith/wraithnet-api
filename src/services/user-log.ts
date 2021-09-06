@@ -8,9 +8,8 @@ import { IUserLogEntries, IUserLogEntry, IUserLogEntrySharable, UserLogEntry } f
 import { IRequest } from "../types";
 import { isValidDate } from "../utils";
 import CustomError, { asCustomError } from "../utils/custom-error";
-import { ITag, ITags, Tag } from '../models/tag';
+import { ITag, ITags } from '../models/tag';
 import { TagsService } from './tags';
-import express from 'express';
 import { IUser } from '../models/user';
 
 dayjs.extend(utc);
@@ -30,6 +29,7 @@ export class UserLogService {
 
             let entry = new UserLogEntry({
                 content,
+                createdAt: dayjs.utc().format(),
                 tags: resolvedTags.map(t => (t as ITag)._id),
                 owner: req.requestor.id,
             });
