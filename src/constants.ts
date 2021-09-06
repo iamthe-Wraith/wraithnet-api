@@ -34,6 +34,7 @@ export const AUTH_ROUTE = '/auth';
 export const PROFILE_ROUTE = '/profile';
 export const STATUS_ROUTE = '/status';
 export const TAGS_ROUTE = '/tags';
+export const TEST_ROUTE = '/test';
 export const USER_LOG_ROUTE = '/user-log';
 export const USERS_ROUTE = '/users';
 export const V1_ROUTE = '/v1';
