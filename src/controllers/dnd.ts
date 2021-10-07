@@ -23,4 +23,13 @@ export class DnDController {
             Response.error(err, req, res);
         }
     }
+
+    static updateChecklistItem: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const item = await DnDService.updateChecklistItem(req);
+            Response.send(DnDService.getSharableItem(item), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    } 
 }
