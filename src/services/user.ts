@@ -126,7 +126,7 @@ export class UsersService {
 
       await user.save();
       return user;
-    } catch (err) {
+    } catch (err: any) {
       let error:CustomError;
 
       if (err.errors) {
@@ -313,7 +313,7 @@ export class UsersService {
         // get user to be updated
         response = await UsersService.get(query);
         user = response.users[0];
-      } catch (err) {
+      } catch (err: any) {
         let error:CustomError;
 
         if (err.isCustomError) {
@@ -452,7 +452,7 @@ export class UsersService {
             await user.save();
 
             return { users: [user] };
-          } catch (err) {
+          } catch (err: any) {
             throw new CustomError(`failed to update user - ${err.message}`, ERROR.GEN);
           }
         } else {
@@ -515,7 +515,7 @@ export class UsersService {
             } else {
               throw new CustomError('you are not authorized to make this request', ERROR.FORBIDDEN);
             }
-          } catch (err) {
+          } catch (err: any) {
             let error:CustomError;
 
             if (err.isCustomError) {

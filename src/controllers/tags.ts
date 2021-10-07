@@ -9,7 +9,7 @@ export class TagsController {
         try {
             const tag = await TagsService.create(req);
             Response.send(TagsService.getSharable(tag), req, res);
-        } catch (err) {
+        } catch (err: any) {
             Response.error(err, req, res);
         }
     }
@@ -18,7 +18,7 @@ export class TagsController {
         try {
             await TagsService.delete(req);
             Response.send(null, req, res);
-        } catch (err) {
+        } catch (err: any) {
             Response.error(err, req, res);
         }   
     }
@@ -35,7 +35,7 @@ export class TagsController {
             } else {
                 Response.send(TagsService.getSharable((tags as ITag)), req, res);
             }
-        } catch (err) {
+        } catch (err: any) {
             Response.error(err, req, res);
         }
     }
@@ -44,7 +44,7 @@ export class TagsController {
         try {
             const tag = await TagsService.update(req);
             Response.send(TagsService.getSharable(tag), req, res);
-        } catch (err) {
+        } catch (err: any) {
             Response.error(err, req, res);
         }   
     }
