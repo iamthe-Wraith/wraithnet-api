@@ -7,7 +7,7 @@ export class AuthController {
     try {
       const token = await AuthService.authenticate(req);
       Response.send(null, req, res, token);
-    } catch (err) {
+    } catch (err: any) {
       Response.error(err, req, res);
     }
   }

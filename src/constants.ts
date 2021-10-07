@@ -31,6 +31,7 @@ export const USERNAME_FORMAT = /^[a-zA-Z0-9]*$/;
 export const ADMIN_ROUTE = '/admin';
 export const API_ROUTE = '/api';
 export const AUTH_ROUTE = '/auth';
+export const DND_ROUTE = '/dnd';
 export const PROFILE_ROUTE = '/profile';
 export const STATUS_ROUTE = '/status';
 export const TAGS_ROUTE = '/tags';
