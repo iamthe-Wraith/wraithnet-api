@@ -31,5 +31,14 @@ export class DnDController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    } 
+    }
+
+    static deleteChecklistItem: RequestHandler = async (req: IRequest, res) => {
+        try {
+            await DnDService.deleteChecklistItem(req);
+            Response.send(null, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
 }

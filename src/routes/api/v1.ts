@@ -66,6 +66,7 @@ router.route(`${DND_ROUTE}/daily-checklist`)
     .post(authMiddleware, DnDController.addChecklistItem);
 
 router.route(`${DND_ROUTE}/daily-checklist/:id`)
-    .patch(authMiddleware, DnDController.updateChecklistItem);
+    .patch(authMiddleware, DnDController.updateChecklistItem)
+    .delete(authMiddleware, DnDController.deleteChecklistItem);
 
 export const v1Router = router;
