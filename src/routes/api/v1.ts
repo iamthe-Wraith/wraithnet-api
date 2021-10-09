@@ -61,11 +61,18 @@ router.route(`${TAGS_ROUTE}/:id`)
 router.route(`${TEST_ROUTE}/get-server-time`)
     .get(authMiddleware, TestController.getServerTime);
 
-router.route(`${DND_ROUTE}/daily-checklist`)
-    .get(authMiddleware, DnDController.getChecklist)
-    .post(authMiddleware, DnDController.addChecklistItem);
+/*****************************************************
+ **                      D&D                        **
+ *****************************************************/
+router.route(`${DND_ROUTE}/:campaignId?`)
+    .get(authMiddleware, DnDController.getCampaigns)
+    .post(authMiddleware, DnDController.createCampaign)
+    .patch(authMiddleware, DnDController.updateCampaign)
+    .delete(authMiddleware, DnDController.deleteCampaign);
 
-router.route(`${DND_ROUTE}/daily-checklist/:id`)
+router.route(`${DND_ROUTE}/:campaignId/daily-checklist/:id?`)
+    .get(authMiddleware, DnDController.getChecklist)
+    .post(authMiddleware, DnDController.addChecklistItem)
     .patch(authMiddleware, DnDController.updateChecklistItem)
     .delete(authMiddleware, DnDController.deleteChecklistItem);
 

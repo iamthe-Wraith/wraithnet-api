@@ -4,6 +4,7 @@ import utc from 'dayjs/plugin/utc';
 
 import { IBaseResource } from '../../types';
 import { IUser } from '../user';
+import { ICampaign } from './campaign';
 
 dayjs.extend(utc);
 
@@ -15,6 +16,7 @@ export interface IDailyChecklistItemRequest {
 
 export interface IBaseDailyChecklistItem extends IDailyChecklistItemRequest, IBaseResource {
     owner: IUser['id'];
+    campaignId: ICampaign['id'];
     markedForDeletion?: boolean;
 }
 
@@ -26,15 +28,14 @@ export interface IDailyChecklistItemSharable extends IBaseDailyChecklistItem {
     id: string;
 }
 
-export interface ITags {
-    count: number;
-    items: IDailyChecklistItem[];
-}
-
 const DailyChecklistItemSchema = new mongoose.Schema({
     owner: {
         type: Schema.Types.ObjectId,
         ref: 'user'
+    },
+    campaignId: {
+        type: Schema.Types.ObjectId,
+        ref: 'campaign',
     },
     text: {
         required: true,
