@@ -1,11 +1,16 @@
 import { Document } from 'mongoose';
 import { request } from "express";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
 import { ERROR } from "../constants";
 import { DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable } from "../models/dnd/daily-checklist-item";
 import { IRequest } from "../types";
 import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
+
+dayjs.extend(utc);
 
 export class DnDService {
     static async addChecklistItem (req: IRequest): Promise<IDailyChecklistItem> {
@@ -48,6 +53,7 @@ export class DnDService {
         try {
             const campaign = new Campaign({
                 name,
+                createdAt: dayjs.utc().format(),
                 owner: req.requestor.id,
             });
 
@@ -165,6 +171,7 @@ export class DnDService {
     static getSharableCampaign = (campaign: ICampaign): ICampaignSharable => {
         const sharable = {
             id: campaign._id,
+            createdAt: campaign.createdAt,
             owner: campaign.owner,
             name: campaign.name,
         };
