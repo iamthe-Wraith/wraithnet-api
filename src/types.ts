@@ -58,3 +58,16 @@ export interface IUserGetResponse {
 export interface IFilter {
     [key: string]: any;
 }
+
+export interface IDnDHoliday {
+    name: string;
+    alternativeNames?: string[];
+    iteration: number;
+}
+
+export interface IDnDCalendarDay {
+    month?: string;
+    date?: number;
+    dayOfWeek?: string;
+    holidays?: IDnDHoliday[];
+}

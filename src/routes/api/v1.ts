@@ -64,6 +64,9 @@ router.route(`${TEST_ROUTE}/get-server-time`)
 /*****************************************************
  **                      D&D                        **
  *****************************************************/
+router.route(`${DND_ROUTE}/calendar`)
+    .get(DnDController.getCalendar);
+
 router.route(`${DND_ROUTE}/:campaignId?`)
     .get(authMiddleware, DnDController.getCampaigns)
     .post(authMiddleware, DnDController.createCampaign)

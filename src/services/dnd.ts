@@ -5,10 +5,11 @@ import utc from 'dayjs/plugin/utc';
 
 import { ERROR } from "../constants";
 import { DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable } from "../models/dnd/daily-checklist-item";
-import { IRequest } from "../types";
+import { IDnDCalendarDay, IRequest } from "../types";
 import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
+import { dndCalendar } from '../../static/dnd-calendar';
 
 dayjs.extend(utc);
 
@@ -134,6 +135,10 @@ export class DnDService {
         } catch (err) {
             throw asCustomError(err);
         }
+    }
+
+    static getCalendar (): IDnDCalendarDay[] {
+        return dndCalendar;
     }
 
     static async getCampaigns (req: IRequest): Promise<ICampaign[]> {
