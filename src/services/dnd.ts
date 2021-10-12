@@ -10,6 +10,7 @@ import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
 import { dndCalendar } from '../../static/dnd-calendar';
+import { DnDDate } from '../utils/dndDate';
 
 dayjs.extend(utc);
 
@@ -47,13 +48,27 @@ export class DnDService {
     }
 
     static async createCampaign (req: IRequest): Promise<ICampaign> {
-        const { name } = req.body;
+        const { name, startDate } = req.body;
 
         if (!name) throw asCustomError(new CustomError('a name is required', ERROR.INVALID_ARG));
+        
+        let dndDate = new DnDDate();
+
+        if (startDate) {
+            try {
+                const parsed = DnDDate.parse(startDate);
+                dndDate.setDate(parsed.date);
+                dndDate.setYear(parsed.year);
+            } catch (err) {
+                throw asCustomError(new CustomError('invalid start date', ERROR.INVALID_ARG));
+            }
+        }
 
         try {
             const campaign = new Campaign({
                 name,
+                startDate: dndDate.stringify(),
+                currentDate: dndDate.stringify(),
                 createdAt: dayjs.utc().format(),
                 owner: req.requestor.id,
             });
@@ -179,6 +194,8 @@ export class DnDService {
             createdAt: campaign.createdAt,
             owner: campaign.owner,
             name: campaign.name,
+            startDate: campaign.startDate,
+            currentDate: campaign.startDate,
         };
 
         return sharable;

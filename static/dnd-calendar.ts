@@ -1,4 +1,6 @@
-export const dndCalendar = [
+import { IDnDCalendarDay } from "../src/types";
+
+export const dndCalendar: IDnDCalendarDay[] = [
     {
         month: "Hammer",
         date: 1,

@@ -9,6 +9,8 @@ dayjs.extend(utc);
 
 export interface ICampaignRequest {
     name: string;
+    startDate: string;
+    currentDate: string;
 }
 
 export interface IBaseCampaign extends ICampaignRequest, IBaseResource {
@@ -28,6 +30,12 @@ const CampaignSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
+    },
+    startDate: {
+        type: String,
+    },
+    currentDate: {
+        type: String,
     },
     owner: {
         type: Schema.Types.ObjectId,
