@@ -42,15 +42,6 @@ export class DnDController {
         }
     }
 
-    static getCalendar: RequestHandler = async (req: IRequest, res) => {
-        try {
-            const calendar = DnDService.getCalendar();
-            Response.send(calendar, req, res);
-        } catch (err: any) {
-            Response.error(err, req, res);
-        }
-    }
-
     static getCampaigns: RequestHandler = async (req: IRequest, res) => {
         try {
             const campaigns = await DnDService.getCampaigns(req);

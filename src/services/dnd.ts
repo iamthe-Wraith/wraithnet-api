@@ -152,10 +152,6 @@ export class DnDService {
         }
     }
 
-    static getCalendar (): IDnDCalendarDay[] {
-        return dndCalendar;
-    }
-
     static async getCampaigns (req: IRequest): Promise<ICampaign[]> {
         try {
             const campaigns = await Campaign.find({
