@@ -1,15 +1,13 @@
 import { Document } from 'mongoose';
-import { request } from "express";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import { ERROR } from "../constants";
 import { DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable } from "../models/dnd/daily-checklist-item";
-import { IDnDCalendarDay, IRequest } from "../types";
+import { IRequest } from "../types";
 import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
-import { dndCalendar } from '../../static/dnd-calendar';
 import { DnDDate } from '../utils/dndDate';
 
 dayjs.extend(utc);
@@ -56,9 +54,7 @@ export class DnDService {
 
         if (startDate) {
             try {
-                const parsed = DnDDate.parse(startDate);
-                dndDate.setDate(parsed.date);
-                dndDate.setYear(parsed.year);
+                dndDate = DnDDate.parseStringToDnDDate(startDate);
             } catch (err) {
                 throw asCustomError(new CustomError('invalid start date', ERROR.INVALID_ARG));
             }
