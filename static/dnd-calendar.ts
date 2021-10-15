@@ -1,3 +1,5 @@
+
+
 export interface IDnDHoliday {
     name: string;
     alternativeNames?: string[];
@@ -195,6 +197,7 @@ export const dndCalendar: IDnDCalendarDay[] = [
     },
     {
         month: DnDMonth.Hammer,
+        date: 10001,
         special: true,
         holiday: {
             name: "Midwinter",
@@ -660,6 +663,7 @@ export const dndCalendar: IDnDCalendarDay[] = [
     },
     {
         month: DnDMonth.Tarsakh,
+        date: 10001,
         special: true,
         holiday: {
             name: "Greengrass",
@@ -1122,6 +1126,7 @@ export const dndCalendar: IDnDCalendarDay[] = [
     },
     {
         month: DnDMonth.Flamerule,
+        date: 10001,
         special: true,
         holiday: {
             name: "Midsummer",
@@ -1130,6 +1135,7 @@ export const dndCalendar: IDnDCalendarDay[] = [
     },
     {
         month: DnDMonth.Flamerule,
+        date: 10002,
         special: true,
         holiday: {
             name: "Shieldmeet",
@@ -1447,6 +1453,7 @@ export const dndCalendar: IDnDCalendarDay[] = [
     },
     {
         month: DnDMonth.Eleint,
+        date: 10001,
         special: true,
         holiday: {
             name: 'Highharvestide',
@@ -1755,6 +1762,7 @@ export const dndCalendar: IDnDCalendarDay[] = [
     },
     {
         month: DnDMonth.Uktar,
+        date: 10001,
         special: true,
         holiday: {
             name: "Feast of the Moon",

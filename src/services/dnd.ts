@@ -54,7 +54,7 @@ export class DnDService {
 
         if (startDate) {
             try {
-                dndDate = DnDDate.parseStringToDnDDate(startDate);
+                dndDate = new DnDDate(startDate);
             } catch (err) {
                 throw asCustomError(new CustomError('invalid start date', ERROR.INVALID_ARG));
             }
