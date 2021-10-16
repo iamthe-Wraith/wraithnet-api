@@ -24,6 +24,15 @@ export class DnDController {
         }
     }
 
+    static createPC: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const pc = await DnDService.createPC(req);
+            Response.send(DnDService.getSharablePC(pc), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static deleteCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
             await DnDService.deleteCampaign(req);
@@ -36,6 +45,15 @@ export class DnDController {
     static deleteChecklistItem: RequestHandler = async (req: IRequest, res) => {
         try {
             await DnDService.deleteChecklistItem(req);
+            Response.send(null, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static deletePC: RequestHandler = async (req: IRequest, res) => {
+        try {
+            await DnDService.deletePC(req);
             Response.send(null, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
@@ -60,6 +78,24 @@ export class DnDController {
         }
     }
 
+    static getPC: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const pc = await DnDService.getPC(req);
+            Response.send(DnDService.getSharablePC(pc), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getPCs: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const pcs = await DnDService.getPCs(req);
+            Response.send(pcs.map(pc => DnDService.getSharablePC(pc)), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static updateCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
             const campaign = await DnDService.updateCampaign(req);
@@ -73,6 +109,15 @@ export class DnDController {
         try {
             const item = await DnDService.updateChecklistItem(req);
             Response.send(DnDService.getSharableItem(item), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static updatePC: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const pc = await DnDService.updatePC(req);
+            Response.send(DnDService.getSharablePCRef(pc), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

@@ -9,6 +9,8 @@ import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
 import { DnDDate } from '../utils/dndDate';
+import { IPC, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
+import { request } from 'express';
 
 dayjs.extend(utc);
 
@@ -72,6 +74,36 @@ export class DnDService {
             await campaign.save();
 
             return campaign;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async createPC (req: IRequest): Promise<IPC> {
+        const { age, name, race, classes = [] } = req.body;
+        const { campaignId } = req.params;
+
+        if (!campaignId) throw asCustomError(new CustomError('no campaign id found. a pc must be added to a campaign', ERROR.INVALID_ARG));
+        if (!name) throw asCustomError(new CustomError('a name is required', ERROR.INVALID_ARG));
+        if (!race) throw asCustomError(new CustomError('a race is required', ERROR.INVALID_ARG));
+        if (classes.length === 0) throw asCustomError(new CustomError('at least one class is required', ERROR.INVALID_ARG));
+        if (!Array.isArray(classes)) throw asCustomError(new CustomError('invalid classes format', ERROR.INVALID_ARG));
+        if (!age) throw asCustomError(new CustomError('an age is required', ERROR.INVALID_ARG));
+        
+        const pc = new PC({
+            owner: req.requestor.id,
+            campaignId,
+            name,
+            race,
+            classes,
+            age,
+            exp: 0,
+            level: 1,
+        });
+
+        try {
+            await pc.save();
+            return pc;
         } catch (err) {
             throw asCustomError(err);
         }
@@ -148,6 +180,40 @@ export class DnDService {
         }
     }
 
+    static async deletePC (req: IRequest): Promise<void> {
+        const { campaignId, id } = req.params;
+
+        if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
+        if (!id) throw asCustomError(new CustomError('no checklist item id found', ERROR.INVALID_ARG));
+
+        const query = {
+            campaignId,
+            owner: req.requestor.id,
+            markedForDeletion: false,
+            _id: id,
+        }
+
+        let pc: IPC & Document<any, any>;
+
+        try {
+            pc = await PC.findOne(query);
+
+            if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        if (pc) {
+            pc.markedForDeletion = true;
+
+            try {
+                await pc.save();
+            } catch (err) {
+                throw asCustomError(err);
+            }
+        }
+    }
+
     static async getCampaigns (req: IRequest): Promise<ICampaign[]> {
         try {
             const campaigns = await Campaign.find({
@@ -176,6 +242,45 @@ export class DnDService {
             
             return checklist;
         } catch (err: any) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async getPC (req: IRequest): Promise<IPC> {
+        const { campaignId, id } = req.params;
+
+        const query = {
+            _id: id,
+            campaignId,
+            owner: req.requestor.id,
+            markedForDeletion: false,
+        }
+
+        try {
+            const pc = await PC.findOne(query);
+
+            if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
+
+            return pc;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }    
+
+    static async getPCs (req: IRequest): Promise<IPC[]> {
+        const { campaignId } = req.params;
+
+        const query = {
+            campaignId,
+            owner: req.requestor.id,
+            markedForDeletion: false,
+        }
+
+        try {
+            return await PC
+                .find(query)
+                .sort({ name: 1 });
+        } catch (err) {
             throw asCustomError(err);
         }
     }
@@ -210,6 +315,27 @@ export class DnDService {
 
     static getSharableList = (checklist: IDailyChecklistItem[]): IDailyChecklistItemSharable[] => {
         return checklist.map(item => DnDService.getSharableItem(item));
+    }
+
+    static getSharablePC = (pc: IPC): IPCSharable => {
+        return {
+            ...DnDService.getSharablePCRef(pc),
+            note: pc.note,
+        };
+    }
+
+    static getSharablePCRef = (pc: IPC): IPCSharableRef => {
+        return {
+            id: pc._id,
+            owner: pc.owner,
+            campaignId: pc.campaignId,
+            name: pc.name,
+            race: pc.race,
+            classes: pc.classes,
+            age: pc.age,
+            exp: pc.exp,
+            level: pc.level,
+        }
     }
 
     static async updateCampaign (req: IRequest): Promise<ICampaign> {
@@ -277,6 +403,49 @@ export class DnDService {
             return item;
         } catch (err: any) {
             throw asCustomError(err);
+        }
+    }
+
+    static async updatePC (req: IRequest): Promise<IPC> {
+        const { age, name, race, classes } = req.body;
+        const { campaignId, id } = req.params;
+
+        if (!age && !name && !race && !classes) throw asCustomError(new CustomError('no updatable content found', ERROR.INVALID_ARG));
+
+        if (classes) {
+            if (classes.length === 0) throw asCustomError(new CustomError('at least one class is required', ERROR.INVALID_ARG));
+            if (!Array.isArray(classes)) throw asCustomError(new CustomError('invalid classes format', ERROR.INVALID_ARG));
+        }
+
+        const query = {
+            owner: req.requestor.id,
+            campaignId,
+            _id: id,
+            markedForDeletion: false,
+        };
+
+        let pc: IPC & Document<any, any, IPC>;
+
+        try {
+            pc = await PC.findOne(query);
+
+            if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        if (pc) {
+            if (age) pc.age = age;
+            if (name) pc.name = name;
+            if (race) pc.race = race;
+            if (classes) pc.classes = classes;
+
+            try {
+                await pc.save();
+                return pc;
+            } catch (err) {
+                throw asCustomError(err);
+            }
         }
     }
 }
