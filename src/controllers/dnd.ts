@@ -90,7 +90,7 @@ export class DnDController {
     static getPCs: RequestHandler = async (req: IRequest, res) => {
         try {
             const pcs = await DnDService.getPCs(req);
-            Response.send(pcs.map(pc => DnDService.getSharablePC(pc)), req, res);
+            Response.send(pcs.map(pc => DnDService.getSharablePCRef(pc)), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

@@ -32,6 +32,7 @@ export interface IBasePCRef extends IPCRequest, IBaseResource {
     campaignId: ICampaign['id'];
     markedForDeletion?: boolean;
     exp: number;
+    expForNextLevel: number;
     level: number;
 }
 

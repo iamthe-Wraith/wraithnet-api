@@ -11,6 +11,7 @@ import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../mod
 import { DnDDate } from '../utils/dndDate';
 import { IPC, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
 import { request } from 'express';
+import { dndExp } from '../../static/dnd-exp';
 
 dayjs.extend(utc);
 
@@ -246,6 +247,10 @@ export class DnDService {
         }
     }
 
+    static getExpForNextLevel = (currentLevel: number) => {
+        return dndExp.find(lvl => lvl.level === (currentLevel + 1))?.threshold;
+    }
+
     static async getPC (req: IRequest): Promise<IPC> {
         const { campaignId, id } = req.params;
 
@@ -334,6 +339,7 @@ export class DnDService {
             classes: pc.classes,
             age: pc.age,
             exp: pc.exp,
+            expForNextLevel: DnDService.getExpForNextLevel(pc.level),
             level: pc.level,
         }
     }
