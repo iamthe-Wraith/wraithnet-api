@@ -5,6 +5,8 @@ import utc from 'dayjs/plugin/utc';
 import { IBaseResource } from '../../types';
 import { IUser } from '../user';
 import { ICampaign } from './campaign';
+import { IDnDRace } from './race';
+import { IDnDClass } from './class';
 
 dayjs.extend(utc);
 
@@ -22,8 +24,8 @@ dayjs.extend(utc);
 
 export interface IPCRequest {
     name: string;
-    race: string;
-    classes: string[];
+    race: IDnDRace['id'];
+    classes: IDnDClass['id'][];
     age: number;
 }
 
@@ -65,11 +67,13 @@ const PCSchema = new mongoose.Schema({
         required: true,
     },
     race: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'race',
         required: true,
     },
     classes: [{
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'class',
         required: true,
     }],
     age: {

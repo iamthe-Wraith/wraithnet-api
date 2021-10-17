@@ -70,6 +70,9 @@ router.route(`${DND_ROUTE}/static/race`)
 router.route(`${DND_ROUTE}/static/class`)
     .get(authMiddleware, DnDController.getClasses);
 
+router.route(`${DND_ROUTE}/static/levels`)
+    .get(authMiddleware, DnDController.getLevels);
+
 router.route(`${DND_ROUTE}/:campaignId?`)
     .get(authMiddleware, DnDController.getCampaigns)
     .post(authMiddleware, DnDController.createCampaign)

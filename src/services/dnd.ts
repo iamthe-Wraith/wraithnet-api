@@ -9,7 +9,7 @@ import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
 import { DnDDate } from '../utils/dndDate';
-import { IPC, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
+import { IPC, IPCRequest, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
 import { dndExp } from '../../static/dnd-exp';
 import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
 import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
@@ -101,7 +101,7 @@ export class DnDService {
     }
 
     static async createPC (req: IRequest): Promise<IPC> {
-        const { age, name, race, classes = [] } = req.body;
+        const { age, name, race, classes = [] } = (req.body as IPCRequest);
         const { campaignId } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found. a pc must be added to a campaign', ERROR.INVALID_ARG));
@@ -110,23 +110,56 @@ export class DnDService {
         if (classes.length === 0) throw asCustomError(new CustomError('at least one class is required', ERROR.INVALID_ARG));
         if (!Array.isArray(classes)) throw asCustomError(new CustomError('invalid classes format', ERROR.INVALID_ARG));
         if (!age) throw asCustomError(new CustomError('an age is required', ERROR.INVALID_ARG));
-        
-        const pc = new PC({
-            owner: req.requestor.id,
-            campaignId,
-            name,
-            race,
-            classes,
-            age,
-            exp: 0,
-            level: 1,
-        });
 
+        // TODO: verify is valid campaign
+
+        let _race: IDnDRace;
+        let _classes: IDnDClass[];
+        
         try {
-            await pc.save();
-            return pc;
+            const races = await DnDService.getRaces(req);
+            _race = races.find(r => `${r._id}` === race);
+            if (!_race) throw new CustomError('invalid race', ERROR.INVALID_ARG);
         } catch (err) {
             throw asCustomError(err);
+        }
+
+        try {
+            const validClasses: IDnDClass[] = [];
+            const invalidClasses: IDnDClass[] = [];
+            const allClasses = await DnDService.getClasses(req);
+            allClasses.forEach(c => {
+                const found = classes.find(cc => `${c._id}` === cc);
+                if (found) {
+                    validClasses.push(c);
+                } else {
+                    invalidClasses.push(c);
+                }
+            });
+            if (invalidClasses.length !== 0) throw new CustomError('only valid class ids allowed', ERROR.INVALID_ARG);
+            _classes = validClasses;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        if (!!_race && !!_classes) {
+            const pc = new PC({
+                owner: req.requestor.id,
+                campaignId,
+                name,
+                race: _race,
+                classes,
+                age,
+                exp: 0,
+                level: 1,
+            });
+    
+            try {
+                await pc.save();
+                return pc;
+            } catch (err) {
+                throw asCustomError(err);
+            }
         }
     }
 
@@ -340,7 +373,10 @@ export class DnDService {
         }
 
         try {
-            const pc = await PC.findOne(query);
+            const pc = await PC
+                .findOne(query)
+                .populate('classes')
+                .populate('race');
 
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
 
@@ -362,6 +398,8 @@ export class DnDService {
         try {
             return await PC
                 .find(query)
+                .populate('classes')
+                .populate('race')
                 .sort({ name: 1 });
         } catch (err) {
             throw asCustomError(err);
@@ -431,8 +469,8 @@ export class DnDService {
             owner: pc.owner,
             campaignId: pc.campaignId,
             name: pc.name,
-            race: pc.race,
-            classes: pc.classes,
+            race: DnDService.getSharableRace(pc.race),
+            classes: pc.classes.map(c => DnDService.getSharableClass(c)),
             age: pc.age,
             exp: pc.exp,
             expForNextLevel: DnDService.getExpForNextLevel(pc.level),

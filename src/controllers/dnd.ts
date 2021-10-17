@@ -5,6 +5,7 @@ import { Response } from '../utils/response';
 import { DnDService } from '../services/dnd';
 import { IRequest } from '../types';
 import { PC } from '../models/dnd/pc';
+import { dndExp } from '../../static/dnd-exp';
 
 export class DnDController {
     static addChecklistItem: RequestHandler = async (req: IRequest, res) => {
@@ -119,6 +120,14 @@ export class DnDController {
         try {            
             const classes = await DnDService.getClasses(req);
             Response.send(classes.map(c => DnDService.getSharableClass(c)), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getLevels: RequestHandler = async (req: IRequest, res) => {
+        try {
+            Response.send(dndExp, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

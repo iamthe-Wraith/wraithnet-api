@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
@@ -10,7 +10,7 @@ export interface IBaseDnDClass extends IBaseResource {
     name: string;
 }
 
-export interface IDnDClass extends IBaseDnDClass {
+export interface IDnDClass extends IBaseDnDClass, Document<string> {
     _id: string;
 }
 

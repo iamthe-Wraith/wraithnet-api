@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
@@ -10,7 +10,7 @@ export interface IBaseDnDRace extends IBaseResource {
     name: string;
 }
 
-export interface IDnDRace extends IBaseDnDRace {
+export interface IDnDRace extends IBaseDnDRace, Document<string> {
     _id: string;
 }
 
