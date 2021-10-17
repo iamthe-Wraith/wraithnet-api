@@ -64,6 +64,12 @@ router.route(`${TEST_ROUTE}/get-server-time`)
 /*****************************************************
  **                      D&D                        **
  *****************************************************/
+router.route(`${DND_ROUTE}/static/race`)
+    .get(authMiddleware, DnDController.getRaces);
+
+router.route(`${DND_ROUTE}/static/class`)
+    .get(authMiddleware, DnDController.getClasses);
+
 router.route(`${DND_ROUTE}/:campaignId?`)
     .get(authMiddleware, DnDController.getCampaigns)
     .post(authMiddleware, DnDController.createCampaign)
@@ -84,6 +90,9 @@ router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .get(authMiddleware, DnDController.getPC)
     .patch(authMiddleware, DnDController.updatePC)
     .delete(authMiddleware, DnDController.deletePC);
+
+// router.route(`${DND_ROUTE}/race/:id`)
+//     .get(authMiddleware, DnDController.getRace);
 
 /*
  - create pc

@@ -10,8 +10,9 @@ import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
 import { DnDDate } from '../utils/dndDate';
 import { IPC, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
-import { request } from 'express';
 import { dndExp } from '../../static/dnd-exp';
+import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
+import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
 
 dayjs.extend(utc);
 
@@ -80,6 +81,25 @@ export class DnDService {
         }
     }
 
+
+    static async createClass (req: IRequest): Promise<IDnDClass> {
+        const { name } = req.body;
+
+        if (!name) throw asCustomError(new CustomError('a class name is required', ERROR.INVALID_ARG));
+
+        const _class = new DnDClass({
+            name,
+            createdAt: dayjs.utc().format(),
+        });
+
+        try {
+            await _class.save();
+            return _class;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static async createPC (req: IRequest): Promise<IPC> {
         const { age, name, race, classes = [] } = req.body;
         const { campaignId } = req.params;
@@ -105,6 +125,24 @@ export class DnDService {
         try {
             await pc.save();
             return pc;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async createRace (req: IRequest): Promise<IDnDRace> {
+        const { name } = req.body;
+
+        if (!name) throw asCustomError(new CustomError('a name is required', ERROR.INVALID_ARG));
+
+        const race = new DnDRace({
+            name,
+            createdAt: dayjs.utc().format(),
+        });
+
+        try {
+            await race.save();
+            return race;
         } catch (err) {
             throw asCustomError(err);
         }
@@ -181,6 +219,20 @@ export class DnDService {
         }
     }
 
+    static async deleteClass (req: IRequest): Promise<void> {
+        const { classId } = req.params;
+
+        if (!classId) throw asCustomError(new CustomError('no class id found', ERROR.INVALID_ARG));
+
+        try {
+            const _class = await DnDClass.findOneAndDelete({ _id: classId });
+
+            if (!_class) throw new CustomError(`class with id: ${classId} not found`, ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static async deletePC (req: IRequest): Promise<void> {
         const { campaignId, id } = req.params;
 
@@ -215,6 +267,20 @@ export class DnDService {
         }
     }
 
+    static async deleteRace (req: IRequest): Promise<void> {
+        const { raceId } = req.params;
+
+        if (!raceId) throw asCustomError(new CustomError('no race id found', ERROR.INVALID_ARG));
+
+        try {
+            const race = await DnDRace.findOneAndDelete({ _id: raceId });
+
+            if (!race) throw new CustomError(`race with id: ${raceId} not found`, ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static async getCampaigns (req: IRequest): Promise<ICampaign[]> {
         try {
             const campaigns = await Campaign.find({
@@ -243,6 +309,18 @@ export class DnDService {
             
             return checklist;
         } catch (err: any) {
+            throw asCustomError(err);
+        }
+    }
+
+    static getClasses = async (req: IRequest): Promise<IDnDClass[]> => {
+        try {
+            const classes = await DnDClass
+                .find({})
+                .sort({ name: 1 });
+
+            return classes;
+        } catch (err) {
             throw asCustomError(err);
         }
     }
@@ -290,6 +368,17 @@ export class DnDService {
         }
     }
 
+    static getRaces = async (req: IRequest): Promise<IDnDRace[]> => {
+        try {
+            const races = await DnDRace
+                .find({})
+                .sort({ name: 1 });
+            return races;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static getSharableCampaign = (campaign: ICampaign): ICampaignSharable => {
         const sharable = {
             id: campaign._id,
@@ -301,6 +390,13 @@ export class DnDService {
         };
 
         return sharable;
+    }
+
+    static getSharableClass = (c: IDnDClass): IDnDClassSharable => {
+        return {
+            name: c.name,
+            id: c._id,
+        };
     }
 
     static getSharableItem = (item: IDailyChecklistItem): IDailyChecklistItemSharable => {
@@ -342,6 +438,13 @@ export class DnDService {
             expForNextLevel: DnDService.getExpForNextLevel(pc.level),
             level: pc.level,
         }
+    }
+
+    static getSharableRace = (race: IDnDRace): IDnDRaceSharable => {
+        return {
+            name: race.name,
+            id: race._id,
+        };
     }
 
     static async updateCampaign (req: IRequest): Promise<ICampaign> {
@@ -412,6 +515,35 @@ export class DnDService {
         }
     }
 
+
+    static async updateClass (req: IRequest): Promise<IDnDRace> {
+        const { name } = req.body;
+        const { classId } = req.params;
+
+        if (!classId) throw new CustomError('resource not found', ERROR.INVALID_ARG);
+        if (!name) throw new CustomError('no updatable content found', ERROR.INVALID_ARG);
+
+        let _class: IDnDClass & Document<any, any, IDnDClass>;
+
+        try {
+            _class = await DnDClass.findOne({ _id: classId });
+            if (!_class) throw new CustomError(`class with id: ${classId} not found`, ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        if (_class) {
+            if (name) _class.name = name;
+
+            try {
+                await _class.save();
+                return _class;
+            } catch (err: any) {
+                throw asCustomError(err);
+            } 
+        }
+    }
+
     static async updatePC (req: IRequest): Promise<IPC> {
         const { age, name, race, classes } = req.body;
         const { campaignId, id } = req.params;
@@ -452,6 +584,34 @@ export class DnDService {
             } catch (err) {
                 throw asCustomError(err);
             }
+        }
+    }
+
+    static async updateRace (req: IRequest): Promise<IDnDRace> {
+        const { name } = req.body;
+        const { raceId } = req.params;
+
+        if (!raceId) throw new CustomError('resource not found', ERROR.INVALID_ARG);
+        if (!name) throw new CustomError('no updatable content found', ERROR.INVALID_ARG);
+
+        let race: IDnDRace & Document<any, any, IDnDRace>;
+
+        try {
+            race = await DnDRace.findOne({ _id: raceId });
+            if (!race) throw new CustomError(`race with id: ${raceId} not found`, ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        if (race) {
+            if (name) race.name = name;
+
+            try {
+                await race.save();
+                return race;
+            } catch (err: any) {
+                throw asCustomError(err);
+            } 
         }
     }
 }

@@ -4,12 +4,22 @@ import { Response } from '../utils/response';
 
 import { DnDService } from '../services/dnd';
 import { IRequest } from '../types';
+import { PC } from '../models/dnd/pc';
 
 export class DnDController {
     static addChecklistItem: RequestHandler = async (req: IRequest, res) => {
         try {
             const item = await DnDService.addChecklistItem(req);
             Response.send(DnDService.getSharableItem(item), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static createClass: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const c = await DnDService.createClass(req);
+            Response.send(DnDService.getSharableClass(c), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
@@ -33,6 +43,15 @@ export class DnDController {
         }
     }
 
+    static createRace: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const race = await DnDService.createRace(req);
+            Response.send(DnDService.getSharableRace(race), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static deleteCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
             await DnDService.deleteCampaign(req);
@@ -51,9 +70,27 @@ export class DnDController {
         }
     }
 
+    static deleteClass: RequestHandler = async (req: IRequest, res) => {
+        try {
+            await DnDService.deleteClass(req);
+            Response.send(null, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static deletePC: RequestHandler = async (req: IRequest, res) => {
         try {
             await DnDService.deletePC(req);
+            Response.send(null, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static deleteRace: RequestHandler = async (req: IRequest, res) => {
+        try {
+            await DnDService.deleteRace(req);
             Response.send(null, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
@@ -78,6 +115,15 @@ export class DnDController {
         }
     }
 
+    static getClasses: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const classes = await DnDService.getClasses(req);
+            Response.send(classes.map(c => DnDService.getSharableClass(c)), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static getPC: RequestHandler = async (req: IRequest, res) => {
         try {
             const pc = await DnDService.getPC(req);
@@ -96,10 +142,31 @@ export class DnDController {
         }
     }
 
+    static getRaces: RequestHandler = async (req: IRequest, res) => {
+        try {
+            console.log('getting races controller');
+            
+            const races = await DnDService.getRaces(req);
+            Response.send(races.map(race => DnDService.getSharableRace(race)), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static updateCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
             const campaign = await DnDService.updateCampaign(req);
             Response.send(DnDService.getSharableCampaign(campaign), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+
+    static updateClass: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const c = await DnDService.updateClass(req);
+            Response.send(DnDService.getSharableClass(c), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
@@ -122,4 +189,13 @@ export class DnDController {
             Response.error(err, req, res);
         }
     }
+
+    static updateRace: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const race = await DnDService.updateRace(req);
+            Response.send(DnDService.getSharableRace(race), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    } 
 }
