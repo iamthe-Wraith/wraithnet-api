@@ -27,15 +27,15 @@ export interface IPCRequest {
     race: IDnDRace['id'];
     classes: IDnDClass['id'][];
     age: number;
+    level: number;
+    exp: number;
 }
 
 export interface IBasePCRef extends IPCRequest, IBaseResource {
     owner: IUser['id'];
     campaignId: ICampaign['id'];
     markedForDeletion?: boolean;
-    exp: number;
     expForNextLevel: number;
-    level: number;
 }
 
 export interface IBasePC extends IBasePCRef {

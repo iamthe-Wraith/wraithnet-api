@@ -152,9 +152,7 @@ export class DnDController {
     }
 
     static getRaces: RequestHandler = async (req: IRequest, res) => {
-        try {
-            console.log('getting races controller');
-            
+        try {            
             const races = await DnDService.getRaces(req);
             Response.send(races.map(race => DnDService.getSharableRace(race)), req, res);
         } catch (err: any) {

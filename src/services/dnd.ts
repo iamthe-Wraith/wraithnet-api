@@ -101,7 +101,7 @@ export class DnDService {
     }
 
     static async createPC (req: IRequest): Promise<IPC> {
-        const { age, name, race, classes = [] } = (req.body as IPCRequest);
+        const { age, name, race, classes = [], exp, level } = (req.body as IPCRequest);
         const { campaignId } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found. a pc must be added to a campaign', ERROR.INVALID_ARG));
@@ -111,16 +111,28 @@ export class DnDService {
         if (!Array.isArray(classes)) throw asCustomError(new CustomError('invalid classes format', ERROR.INVALID_ARG));
         if (!age) throw asCustomError(new CustomError('an age is required', ERROR.INVALID_ARG));
 
-        // TODO: verify is valid campaign
-
         let _race: IDnDRace;
         let _classes: IDnDClass[];
         
+        try {
+            const campaigns = await DnDService.getCampaigns(req);
+            const campaign = campaigns.find(c => `${c.id}` === campaignId);
+            if (!campaign) throw new CustomError('invalid campaign', ERROR.INVALID_ARG);
+        } catch (err) {
+            console.log('error getting campaign');
+            console.log(err);
+            
+            throw asCustomError(err);
+        }
+
         try {
             const races = await DnDService.getRaces(req);
             _race = races.find(r => `${r._id}` === race);
             if (!_race) throw new CustomError('invalid race', ERROR.INVALID_ARG);
         } catch (err) {
+            console.log('error getting races');
+            console.log(err);
+
             throw asCustomError(err);
         }
 
@@ -139,6 +151,9 @@ export class DnDService {
             if (invalidClasses.length !== 0) throw new CustomError('only valid class ids allowed', ERROR.INVALID_ARG);
             _classes = validClasses;
         } catch (err) {
+            console.log('error getting classes');
+            console.log(err);
+
             throw asCustomError(err);
         }
 
@@ -153,6 +168,16 @@ export class DnDService {
                 exp: 0,
                 level: 1,
             });
+
+            if (typeof level === 'number') {
+                // TODO: if exp is also passed, need to ensure that it falls within this leve's threshold
+                pc.level = level;
+            }
+
+            if (typeof exp === 'number') {
+                // TODO: if level is also passed, need to ensure falls within level's threshold
+                pc.exp = exp;
+            }
     
             try {
                 await pc.save();
