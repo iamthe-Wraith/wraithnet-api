@@ -2,16 +2,20 @@ import { Router } from 'express';
 
 import { authMiddleware } from '../../middleware/auth'; 
 import { UsersController } from '../../controllers/users';
-import { AUTHORIZATION_HEADER, DND_ROUTE, ERROR, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
+import { AUTHORIZATION_HEADER, DND_ROUTE, ERROR, NOTES_ROUTE, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
 import CustomError from '../../utils/custom-error';
 import { Response } from '../../utils/response';
 import { UserLogController } from '../../controllers/user-log';
 import { TagsController } from '../../controllers/tags';
 import { TestController } from '../../controllers/test';
 import { DnDController } from '../../controllers/dnd';
+import { NotesController } from '../../controllers/notes';
 
 const router = Router();
 
+/*****************************************************
+ **                      Users                      **
+ *****************************************************/
 router.route(USERS_ROUTE)
     .post((req, res, next) => {
         const token = req.get(AUTHORIZATION_HEADER);
@@ -49,6 +53,9 @@ router.route(`${USER_LOG_ROUTE}/:id`)
 router.route(PROFILE_ROUTE)
     .get(authMiddleware, UsersController.getProfile);
 
+/*****************************************************
+ **                      Tags                       **
+ *****************************************************/
 router.route(TAGS_ROUTE)
     .post(authMiddleware, TagsController.create)
     .get(authMiddleware, TagsController.get);
@@ -60,6 +67,13 @@ router.route(`${TAGS_ROUTE}/:id`)
 
 router.route(`${TEST_ROUTE}/get-server-time`)
     .get(authMiddleware, TestController.getServerTime);
+
+/*****************************************************
+ **                      Notes                      **
+ *****************************************************/
+router.route(NOTES_ROUTE)
+    .post(authMiddleware, NotesController.createNote)
+    .get(authMiddleware, NotesController.getNotes);
 
 /*****************************************************
  **                      D&D                        **
