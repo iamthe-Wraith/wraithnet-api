@@ -85,9 +85,15 @@ router.route(`${DND_ROUTE}/:campaignId/daily-checklist/:id?`)
     .patch(authMiddleware, DnDController.updateChecklistItem)
     .delete(authMiddleware, DnDController.deleteChecklistItem);
 
-router.route(`${DND_ROUTE}/:campaignId/pc/`)
+router.route(`${DND_ROUTE}/:campaignId/party-exp`)
+    .patch(authMiddleware, DnDController.updatePartyXP);
+
+router.route(`${DND_ROUTE}/:campaignId/pc`)
     .post(authMiddleware, DnDController.createPC)
     .get(authMiddleware, DnDController.getPCs);
+
+router.route(`${DND_ROUTE}/:campaignId/pc/:id/exp`)
+    .patch(authMiddleware, DnDController.updatePCExp)
 
 router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .get(authMiddleware, DnDController.getPC)

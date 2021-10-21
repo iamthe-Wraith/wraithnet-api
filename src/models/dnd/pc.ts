@@ -27,7 +27,6 @@ export interface IPCRequest {
     race: IDnDRace['id'];
     classes: IDnDClass['id'][];
     age: number;
-    level: number;
     exp: number;
 }
 
@@ -35,7 +34,6 @@ export interface IBasePCRef extends IPCRequest, IBaseResource {
     owner: IUser['id'];
     campaignId: ICampaign['id'];
     markedForDeletion?: boolean;
-    expForNextLevel: number;
 }
 
 export interface IBasePC extends IBasePCRef {
@@ -55,10 +53,14 @@ export interface IPCRef extends IBasePCRef {
 
 export interface IPCSharable extends IBasePC {
     id: string;
+    expForNextLevel: number;
+    level: number;
 }
 
 export interface IPCSharableRef extends IBasePCRef {
     id: string;
+    expForNextLevel: number;
+    level: number;
 }
 
 const PCSchema = new mongoose.Schema({
@@ -84,11 +86,6 @@ const PCSchema = new mongoose.Schema({
         type: Number,
         required: true,
         default: 0,
-    },
-    level: {
-        type: Number,
-        required: true,
-        default: 1,
     },
     note: {
         type: Schema.Types.ObjectId,

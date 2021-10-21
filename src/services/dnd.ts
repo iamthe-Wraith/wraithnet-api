@@ -9,12 +9,88 @@ import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
 import { DnDDate } from '../utils/dndDate';
-import { IPC, IPCRequest, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
+import { IPC, IPCRef, IPCRequest, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
 import { dndExp } from '../../static/dnd-exp';
 import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
 import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
 
 dayjs.extend(utc);
+
+interface IExpResult {
+    exp: number;
+    expForNextLevel: number;
+    level: number;
+    leveledUp: boolean;
+}
+
+const getExpForNextLevel = (exp: number) => {
+    let xp = 0;
+
+    for (let i = 0; i < dndExp.length; i++) {
+        if (dndExp[i].threshold <= exp) {
+            const nextLevel = dndExp[i + 1];
+            if (nextLevel) {
+                if (nextLevel.threshold > exp) xp = nextLevel.threshold;
+            } else {
+                // is already at the highest level
+                xp = null;
+            }
+        }
+    }
+
+    return xp;
+}
+
+const getLevel = (exp: number) => {
+    let level = 0;
+
+    for (let i = 0; i < dndExp.length; i++) {
+        if (dndExp[i].threshold <= exp) {
+            const nextLevel = dndExp[i + 1];
+            if (nextLevel) {
+                if (nextLevel.threshold > exp) level = nextLevel.level;
+            } else {
+                // is already at the highest level
+                level = dndExp[i].level;
+            }
+        }
+    }
+
+    return level;
+}
+
+const parseExp = (exp: string): number => {
+    const regex = /\D+/; // get non-numerical characters
+    let expClone = `${exp}`;
+
+    let isInvalid = false;
+    let minus = false;
+
+    if (expClone[0] === '-') {
+        minus = true;
+        expClone = expClone.split('-').join('');
+    }
+    if (expClone[0] === '+') {
+        expClone = expClone.split('+').join('');
+    }
+
+    if (!expClone) isInvalid = true;
+
+    if (!isInvalid) {
+        const nonDigits = expClone.match(regex);
+        if (!!nonDigits) isInvalid = true;
+    }
+
+    let v = 0;
+    if (!isInvalid) {
+        v = parseInt(expClone);
+        if (isNaN(v) || v <= 0) isInvalid = true;
+    }
+
+    if (isInvalid) throw asCustomError(new CustomError('invalid exp received', ERROR.INVALID_ARG));
+
+    return minus ? (v * -1) : v;
+}
 
 export class DnDService {
     static async addChecklistItem (req: IRequest): Promise<IDailyChecklistItem> {
@@ -101,7 +177,7 @@ export class DnDService {
     }
 
     static async createPC (req: IRequest): Promise<IPC> {
-        const { age, name, race, classes = [], exp, level } = (req.body as IPCRequest);
+        const { age, name, race, classes = [], exp } = (req.body as IPCRequest);
         const { campaignId } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found. a pc must be added to a campaign', ERROR.INVALID_ARG));
@@ -151,9 +227,6 @@ export class DnDService {
             if (invalidClasses.length !== 0) throw new CustomError('only valid class ids allowed', ERROR.INVALID_ARG);
             _classes = validClasses;
         } catch (err) {
-            console.log('error getting classes');
-            console.log(err);
-
             throw asCustomError(err);
         }
 
@@ -166,18 +239,9 @@ export class DnDService {
                 classes,
                 age,
                 exp: 0,
-                level: 1,
             });
 
-            if (typeof level === 'number') {
-                // TODO: if exp is also passed, need to ensure that it falls within this leve's threshold
-                pc.level = level;
-            }
-
-            if (typeof exp === 'number') {
-                // TODO: if level is also passed, need to ensure falls within level's threshold
-                pc.exp = exp;
-            }
+            if (typeof exp === 'number') pc.exp = exp;
     
             try {
                 await pc.save();
@@ -383,11 +447,7 @@ export class DnDService {
         }
     }
 
-    static getExpForNextLevel = (currentLevel: number) => {
-        return dndExp.find(lvl => lvl.level === (currentLevel + 1))?.threshold;
-    }
-
-    static async getPC (req: IRequest): Promise<IPC> {
+    static async getPC (req: IRequest): Promise<IPC & Document<any, any, IPC>> {
         const { campaignId, id } = req.params;
 
         const query = {
@@ -411,7 +471,7 @@ export class DnDService {
         }
     }    
 
-    static async getPCs (req: IRequest): Promise<IPC[]> {
+    static async getPCs (req: IRequest): Promise<(IPC & Document<any, any, IPC>)[]> {
         const { campaignId } = req.params;
 
         const query = {
@@ -488,7 +548,7 @@ export class DnDService {
         };
     }
 
-    static getSharablePCRef = (pc: IPC): IPCSharableRef => {
+    static getSharablePCRef = (pc: IPCRef): IPCSharableRef => {
         return {
             id: pc._id,
             owner: pc.owner,
@@ -498,8 +558,8 @@ export class DnDService {
             classes: pc.classes.map(c => DnDService.getSharableClass(c)),
             age: pc.age,
             exp: pc.exp,
-            expForNextLevel: DnDService.getExpForNextLevel(pc.level),
-            level: pc.level,
+            expForNextLevel: getExpForNextLevel(pc.exp),
+            level: getLevel(pc.exp),
         }
     }
 
@@ -607,6 +667,53 @@ export class DnDService {
         }
     }
 
+    static async updatePartyXP (req: IRequest): Promise<{ exp: IExpResult, pc: IPCRef }[]> {
+        const { exp } = req.body;
+        const { campaignId } = req.params;
+
+        if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
+        if (!exp) throw asCustomError(new CustomError('no updatable exp found', ERROR.INVALID_ARG));
+
+        const xp = parseExp(exp);
+
+        let pcs: (IPC & Document<any, any, IPC>)[];
+        try {
+            pcs = await DnDService.getPCs(req);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        const xpEach = Math.floor(xp / pcs.length);
+
+        const response: { exp: IExpResult, pc: IPCRef }[] = [];
+
+        for (const pc of pcs) {
+            const newExp = pc.exp + xpEach;
+            const currentLevel = getLevel(pc.exp);
+            const newLevel = getLevel(newExp);
+            const leveledUp = currentLevel < newLevel;
+            pc.exp = newExp;
+
+            try {
+                await pc.save();
+
+                response.push({
+                    pc,
+                    exp: {
+                        exp: pc.exp,
+                        expForNextLevel: getExpForNextLevel(pc.exp),
+                        level: newLevel,
+                        leveledUp
+                    }
+                })
+            } catch (err) {
+                throw asCustomError(err);
+            }
+        }
+
+        return response;
+    }
+
     static async updatePC (req: IRequest): Promise<IPC> {
         const { age, name, race, classes } = req.body;
         const { campaignId, id } = req.params;
@@ -647,6 +754,44 @@ export class DnDService {
             } catch (err) {
                 throw asCustomError(err);
             }
+        }
+    }
+
+    static async updatePCExp (req: IRequest): Promise<IExpResult> {
+        const { exp } = req.body;
+        const { campaignId, id } = req.params;
+
+        if (!campaignId) new CustomError('no campaign id found', ERROR.INVALID_ARG);
+        if (!id) new CustomError('no pc id found', ERROR.INVALID_ARG);
+        if (!exp) new CustomError('no updatable exp found', ERROR.INVALID_ARG);
+
+        const xp = parseExp(exp);
+
+        let pc: IPC & Document<any, any, IPC>;
+        try {
+            pc = await DnDService.getPC(req);
+            if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        const newExp = pc.exp + xp;
+        const currentLevel = getLevel(pc.exp);
+        const newLevel = getLevel(newExp);
+        const leveledUp = currentLevel < newLevel;
+
+        pc.exp = newExp;
+
+        try {
+            await pc.save();
+            return {
+                exp: pc.exp,
+                expForNextLevel: getExpForNextLevel(pc.exp),
+                level: newLevel,
+                leveledUp
+            };
+        } catch (err) {
+            throw asCustomError(err);
         }
     }
 

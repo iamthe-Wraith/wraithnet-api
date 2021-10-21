@@ -188,10 +188,33 @@ export class DnDController {
         }
     }
 
+    static updatePartyXP: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const pcsExp = await DnDService.updatePartyXP(req);
+            Response.send(pcsExp.map(x => {
+                return {
+                    pc: DnDService.getSharablePCRef(x.pc),
+                    exp: x.exp,
+                }
+            }), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static updatePC: RequestHandler = async (req: IRequest, res) => {
         try {
             const pc = await DnDService.updatePC(req);
             Response.send(DnDService.getSharablePCRef(pc), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static updatePCExp: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const result = await DnDService.updatePCExp(req);
+            Response.send(result, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
