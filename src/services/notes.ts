@@ -30,6 +30,26 @@ export class NotesService {
         }
     }
 
+    static async getNote (req: IRequest): Promise<INote> {
+        const { id } = req.params;
+
+        if (!id) throw new CustomError('a note id is required', ERROR.INVALID_ARG);
+
+        const query = {
+            owner: req.requestor.id,
+            markedForDeletion: false,
+            _id: id,
+        }
+
+        try {
+            const note = await Note.findOne(query);
+            if (!note) throw new CustomError('note not found', ERROR.NOT_FOUND);
+            return note;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static async getNotes (req: IRequest): Promise<INotes> {
         const {
             category,
@@ -85,6 +105,7 @@ export class NotesService {
 
     static getSharableNoteRef (note: INote | INoteRef) {
         return {
+            id: note._id,
             owner: note.owner,
             createdAt: note.createdAt,
             name: note.name,

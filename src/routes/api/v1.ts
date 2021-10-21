@@ -75,6 +75,9 @@ router.route(NOTES_ROUTE)
     .post(authMiddleware, NotesController.createNote)
     .get(authMiddleware, NotesController.getNotes);
 
+router.route(`${NOTES_ROUTE}/:id`)
+    .get(authMiddleware, NotesController.getNote);
+
 /*****************************************************
  **                      D&D                        **
  *****************************************************/
