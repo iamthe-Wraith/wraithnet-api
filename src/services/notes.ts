@@ -1,14 +1,15 @@
+import { Document } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { IRequest } from '../types';
-import { INote, INoteRef, INotes, Note } from '../models/note';
+import { INote, INoteRef, INotes, Note, NoteCategory } from '../models/note';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import { ERROR } from '../constants';
 
 dayjs.extend(utc);
 
 export class NotesService {
-    static async createNote (req: IRequest): Promise<INote> {
+    static async createNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
         const { name, text = '', category } = req.body;
 
         if (!name) throw new CustomError('a note name is required', ERROR.INVALID_ARG);
@@ -30,7 +31,7 @@ export class NotesService {
         }
     }
 
-    static async getNote (req: IRequest): Promise<INote> {
+    static async getNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
         const { id } = req.params;
 
         if (!id) throw new CustomError('a note id is required', ERROR.INVALID_ARG);
@@ -111,5 +112,37 @@ export class NotesService {
             name: note.name,
             category: note.category,
         };
+    }
+
+    static async updateNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
+        const { name, text, category } = (req.body as {
+            name?: string;
+            text?: string;
+            category?: string;
+        });
+
+        if (!name && !text && !category) throw new CustomError('no updating content found', ERROR.INVALID_ARG);
+
+        let note: INote & Document<any, any, INote>;
+        try {
+            note = await NotesService.getNote(req);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        if (name) note.name = name;
+        if (text) note.text = text;
+        if (category) {
+            const cat = Object.values(NoteCategory).find(nc => nc === category);
+            if (!cat) throw new CustomError('invalid category', ERROR.INVALID_ARG);
+            note.category = cat;
+        };
+
+        try {
+            await note.save();
+            return note;
+        } catch (err) {
+            throw asCustomError(err);
+        }
     }
 }
