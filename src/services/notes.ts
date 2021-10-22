@@ -2,11 +2,15 @@ import { Document } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { IRequest } from '../types';
-import { INote, INoteRef, INotes, Note, NoteCategory } from '../models/note';
+import { INote, INoteRef, INotes, INoteSharableRef, Note, NoteCategory } from '../models/note';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import { ERROR } from '../constants';
 
 dayjs.extend(utc);
+
+const isValidCategory = (category: string) => {
+    return !!Object.values(NoteCategory).find(nc => nc === category);
+}
 
 export class NotesService {
     static async createNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
@@ -14,7 +18,8 @@ export class NotesService {
 
         if (!name) throw new CustomError('a note name is required', ERROR.INVALID_ARG);
         if (!category) throw new CustomError('a note category is required', ERROR.INVALID_ARG);
-
+        if (!isValidCategory(category)) throw new CustomError('invalid category', ERROR.INVALID_ARG);
+        
         const note = new Note({
             owner: req.requestor.id,
             name,
@@ -26,6 +31,24 @@ export class NotesService {
         try {
             await note.save();
             return note;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async deleteNote (req: IRequest): Promise<void> {
+        let note: INote & Document<any, any, INote>;
+        try {
+            note = await NotesService.getNote(req);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        note.markedForDeletion = true;
+        note.lastModified = dayjs.utc().toDate();
+
+        try {
+            await note.save();
         } catch (err) {
             throw asCustomError(err);
         }
@@ -63,6 +86,7 @@ export class NotesService {
         });
 
         if (!category) throw new CustomError('a note category is required', ERROR.INVALID_ARG);
+        if (!isValidCategory(category)) throw new CustomError('this is not a valid category', ERROR.INVALID_ARG);
 
         const query: any = {
             $and: [{ owner: req.requestor.id }, { markedForDeletion: false }, { category }],
@@ -105,13 +129,17 @@ export class NotesService {
     }
 
     static getSharableNoteRef (note: INote | INoteRef) {
-        return {
+        const noteRef: INoteSharableRef = {
             id: note._id,
             owner: note.owner,
             createdAt: note.createdAt,
             name: note.name,
             category: note.category,
         };
+
+        if (note.lastModified) noteRef.lastModified = dayjs.utc().toDate();
+
+        return noteRef;
     }
 
     static async updateNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
@@ -133,10 +161,13 @@ export class NotesService {
         if (name) note.name = name;
         if (text) note.text = text;
         if (category) {
-            const cat = Object.values(NoteCategory).find(nc => nc === category);
-            if (!cat) throw new CustomError('invalid category', ERROR.INVALID_ARG);
-            note.category = cat;
+            if (isValidCategory(category)) {
+                note.category = category as NoteCategory;
+            } else {
+                throw new CustomError('invalid category', ERROR.INVALID_ARG);
+            }
         };
+        note.lastModified = dayjs.utc().toDate();
 
         try {
             await note.save();

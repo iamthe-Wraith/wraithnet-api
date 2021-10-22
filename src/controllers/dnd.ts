@@ -4,7 +4,6 @@ import { Response } from '../utils/response';
 
 import { DnDService } from '../services/dnd';
 import { IRequest } from '../types';
-import { PC } from '../models/dnd/pc';
 import { dndExp } from '../../static/dnd-exp';
 
 export class DnDController {

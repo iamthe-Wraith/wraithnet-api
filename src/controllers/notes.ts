@@ -13,6 +13,15 @@ export class NotesController {
         }
     }
 
+    static deleteNote: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const note = await NotesService.deleteNote(req);
+            Response.send(null, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static getNote: RequestHandler = async (req: IRequest, res) => {
         try {
             const note = await NotesService.getNote(req);

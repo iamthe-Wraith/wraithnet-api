@@ -77,7 +77,8 @@ router.route(NOTES_ROUTE)
 
 router.route(`${NOTES_ROUTE}/:id`)
     .get(authMiddleware, NotesController.getNote)
-    .patch(authMiddleware, NotesController.updateNote);
+    .patch(authMiddleware, NotesController.updateNote)
+    .delete(authMiddleware, NotesController.deleteNote);
 
 /*****************************************************
  **                      D&D                        **
