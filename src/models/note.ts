@@ -7,15 +7,16 @@ import { IUser } from './user';
 
 dayjs.extend(utc);
 
-export enum NoteCategory {
-    DND_MISC = 'dnd_misc',
+export enum ReservedNoteCategory {
+    DND_MISC = '__dnd_misc_resource',
 }
 
 export interface IBaseNoteRef extends IBaseResource {
     owner: IUser['id'];
+    access?: string[];
     markedForDeletion?: boolean;
     name: string;
-    category: NoteCategory;
+    category: string;
 }
 
 export interface IBaseNote extends IBaseNoteRef {
@@ -48,6 +49,9 @@ const NoteSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'user'
     },
+    access: [{
+        type: String
+    }],
     name: {
         required: true,
         type: String,

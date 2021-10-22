@@ -1,27 +1,60 @@
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { IRequest } from '../types';
-import { INote, INoteRef, INotes, INoteSharableRef, Note, NoteCategory } from '../models/note';
+import { INote, INoteRef, INotes, INoteSharableRef, Note, ReservedNoteCategory } from '../models/note';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import { ERROR } from '../constants';
+import { ROLE } from '../models/user';
 
 dayjs.extend(utc);
 
-const isValidCategory = (category: string) => {
-    return !!Object.values(NoteCategory).find(nc => nc === category);
-}
-
 export class NotesService {
     static async createNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
-        const { name, text = '', category } = req.body;
+        const { name, text = '', category, access = [] } = (req.body as {
+            name: string;
+            text?: string;
+            category: string;
+            access?: string[];
+        });
 
+        // ensure a name has been provided
         if (!name) throw new CustomError('a note name is required', ERROR.INVALID_ARG);
-        if (!category) throw new CustomError('a note category is required', ERROR.INVALID_ARG);
-        if (!isValidCategory(category)) throw new CustomError('invalid category', ERROR.INVALID_ARG);
-        
+
+        // if a category is provided, check if it is a reserved
+        // if so, only admins can used reserved categories
+        if (category) {
+            if (!!Object.values(ReservedNoteCategory).find(r => r === category) && req.requestor.role > ROLE.ADMIN) {
+                throw new CustomError('you do not have permissions to use this reserved category', ERROR.INVALID_ARG);
+            }
+        } else {
+            throw new CustomError('a note category is required', ERROR.INVALID_ARG)
+        }
+
+        // ensure that access is an array and that only contains
+        // `all` (admins only) or value user ids
+        if (Array.isArray(access)) {
+            const invalidAccess = access.filter(a => a !== 'all' && !Types.ObjectId.isValid(a));
+            if (invalidAccess.length) throw new CustomError(`invalid access id${invalidAccess.length ? 's' : ''} found: ${invalidAccess.join(', ')}`);
+        } else {
+            throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG)
+        }
+
+        // only allow note to be shared with all users if requestor
+        // is an admin and category is a reserved category
+        if (access.find(a => a === 'all')) {
+            if (req.requestor.role > ROLE.ADMIN) {
+                throw new CustomError('you do not have permissions to share this note with all users', ERROR.UNAUTHORIZED);
+            }
+
+            if (!Object.values(ReservedNoteCategory).find(c => c === category)) {
+                throw new CustomError('the category cannot be shared with all users', ERROR.INVALID_ARG)
+            }
+        }
+
         const note = new Note({
             owner: req.requestor.id,
+            access,
             name,
             category,
             text,
@@ -44,6 +77,10 @@ export class NotesService {
             throw asCustomError(err);
         }
 
+        if ((Object.values(ReservedNoteCategory).find(r => r === note.category) || !!note.access?.find(a => a === 'all')) && req.requestor.role > ROLE.ADMIN) {
+            throw new CustomError('you are not authorized to delete this note', ERROR.UNAUTHORIZED);
+        }
+
         note.markedForDeletion = true;
         note.lastModified = dayjs.utc().toDate();
 
@@ -59,11 +96,16 @@ export class NotesService {
 
         if (!id) throw new CustomError('a note id is required', ERROR.INVALID_ARG);
 
-        const query = {
-            owner: req.requestor.id,
-            markedForDeletion: false,
-            _id: id,
-        }
+        const query: any = {
+            $and: [
+                { markedForDeletion: false },
+                { _id: id },
+                { $or: [
+                    { owner: req.requestor.id },
+                    { access: { "$in": [req.requestor.id, 'all'] } }
+                ] }
+            ],
+        };
 
         try {
             const note = await Note.findOne(query);
@@ -86,10 +128,16 @@ export class NotesService {
         });
 
         if (!category) throw new CustomError('a note category is required', ERROR.INVALID_ARG);
-        if (!isValidCategory(category)) throw new CustomError('this is not a valid category', ERROR.INVALID_ARG);
 
         const query: any = {
-            $and: [{ owner: req.requestor.id }, { markedForDeletion: false }, { category }],
+            $and: [
+                { markedForDeletion: false },
+                { category },
+                { $or: [
+                    { owner: req.requestor.id },
+                    { access: { $in: [req.requestor.id, 'all'] } }
+                ] }
+            ]
         };
 
         let _page = 0;
@@ -143,13 +191,14 @@ export class NotesService {
     }
 
     static async updateNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
-        const { name, text, category } = (req.body as {
+        const { name, text, category, access } = (req.body as {
             name?: string;
             text?: string;
             category?: string;
+            access?: string[];
         });
 
-        if (!name && !text && !category) throw new CustomError('no updating content found', ERROR.INVALID_ARG);
+        if (!name && !text && !category && !access) throw new CustomError('no updating content found', ERROR.INVALID_ARG);
 
         let note: INote & Document<any, any, INote>;
         try {
@@ -160,13 +209,53 @@ export class NotesService {
 
         if (name) note.name = name;
         if (text) note.text = text;
+
+        // if a category is provided, check if it is a reserved
+        // if so, only admins can used reserved categories
         if (category) {
-            if (isValidCategory(category)) {
-                note.category = category as NoteCategory;
-            } else {
-                throw new CustomError('invalid category', ERROR.INVALID_ARG);
+            if (Object.values(ReservedNoteCategory).find(r => r === category) && req.requestor.role > ROLE.ADMIN) {
+                throw new CustomError('you do not have permissions to use this reserved category', ERROR.INVALID_ARG);
             }
-        };
+
+            if (Object.values(ReservedNoteCategory).find(r => r === note.category) && req.requestor.role > ROLE.ADMIN) {
+                throw new CustomError('you do not have permissions to change this note\'s category', ERROR.INVALID_ARG);
+            }
+
+            note.category = category;
+        }
+
+
+        if (access) {
+            // ensure that access is an array and that only contains
+            // `all` (admins only) or value user ids
+            if (Array.isArray(access)) {
+                const invalidAccess = access.filter(a => a !== 'all' && !Types.ObjectId.isValid(a));
+                if (invalidAccess.length) throw new CustomError(`invalid access id${invalidAccess.length ? 's' : ''} found: ${invalidAccess.join(', ')}`);
+            } else {
+                throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG)
+            }
+
+            // only allow note to be shared with all users if requestor
+            // is an admin and category is a reserved category
+            if (access.find(a => a === 'all')) {
+                if (req.requestor.role > ROLE.ADMIN) {
+                    throw new CustomError('you do not have permissions to share this note with all users', ERROR.UNAUTHORIZED);
+                }
+
+                if (!Object.values(ReservedNoteCategory).find(c => c === category)) {
+                    throw new CustomError('the category cannot be shared with all users', ERROR.INVALID_ARG)
+                }
+            }
+        }
+
+        // if this note is already shared with all users, only admins
+        // can change this
+        if (note.access?.find(a => a === 'all') && req.requestor.role > ROLE.ADMIN) {
+            throw new CustomError('you do not have permissions to change this note\'s access', ERROR.UNAUTHORIZED);
+        }
+
+        note.access = access;
+
         note.lastModified = dayjs.utc().toDate();
 
         try {

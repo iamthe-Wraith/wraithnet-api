@@ -10,6 +10,7 @@ import { TagsController } from '../../controllers/tags';
 import { TestController } from '../../controllers/test';
 import { DnDController } from '../../controllers/dnd';
 import { NotesController } from '../../controllers/notes';
+import { NotesService } from '../../services/notes';
 
 const router = Router();
 
@@ -92,6 +93,12 @@ router.route(`${DND_ROUTE}/static/class`)
 router.route(`${DND_ROUTE}/static/levels`)
     .get(authMiddleware, DnDController.getLevels);
 
+router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc`)
+    .get(authMiddleware, DnDController.getMiscNotes);
+
+router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc/:id`)
+    .get(authMiddleware, DnDController.getMiscNote);
+
 router.route(`${DND_ROUTE}/:campaignId?`)
     .get(authMiddleware, DnDController.getCampaigns)
     .post(authMiddleware, DnDController.createCampaign)
@@ -119,16 +126,7 @@ router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .patch(authMiddleware, DnDController.updatePC)
     .delete(authMiddleware, DnDController.deletePC);
 
-// router.route(`${DND_ROUTE}/race/:id`)
-//     .get(authMiddleware, DnDController.getRace);
-
 /*
- - create pc
- - get all pcs for a campaign (should return pc ref (will not include notes, events, contacts))
- - get a pc's details (WILL include notes, contacts, and events)
- - update pc
- - delete pc
-
  - add note for pc (notes will be separate resource and linked to pc) (each pc will have only 1 note)
  - get note for pc
  - update note for pc

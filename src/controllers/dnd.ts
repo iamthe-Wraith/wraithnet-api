@@ -5,6 +5,9 @@ import { Response } from '../utils/response';
 import { DnDService } from '../services/dnd';
 import { IRequest } from '../types';
 import { dndExp } from '../../static/dnd-exp';
+import { NotesController } from './notes';
+import { NotesService } from '../services/notes';
+import { ReservedNoteCategory } from '../models/note';
 
 export class DnDController {
     static addChecklistItem: RequestHandler = async (req: IRequest, res) => {
@@ -32,6 +35,17 @@ export class DnDController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
+    }
+
+    static createMiscNote: RequestHandler = async (req: IRequest, res) => {
+        try {
+            req.body.category = ReservedNoteCategory.DND_MISC;
+            req.body.access = ['all'];
+            const note = await NotesService.createNote(req);
+            Response.send(NotesService.getSharableNote(note), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        } 
     }
 
     static createPC: RequestHandler = async (req: IRequest, res) => {
@@ -73,6 +87,15 @@ export class DnDController {
     static deleteClass: RequestHandler = async (req: IRequest, res) => {
         try {
             await DnDService.deleteClass(req);
+            Response.send(null, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static deleteMiscNote: RequestHandler = async (req: IRequest, res) => {
+        try {
+            await NotesService.deleteNote(req);
             Response.send(null, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
@@ -132,6 +155,25 @@ export class DnDController {
         }
     }
 
+    static getMiscNote: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const note = await NotesService.getNote(req);
+            Response.send(NotesService.getSharableNote(note), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getMiscNotes: RequestHandler = async (req: IRequest, res) => {
+        try {
+            req.query.category = ReservedNoteCategory.DND_MISC;
+            const notes = await NotesService.getNotes(req);
+            Response.send({ ...notes, notes: notes.notes.map(note => NotesService.getSharableNoteRef(note)) }, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static getPC: RequestHandler = async (req: IRequest, res) => {
         try {
             const pc = await DnDService.getPC(req);
@@ -182,6 +224,17 @@ export class DnDController {
         try {
             const item = await DnDService.updateChecklistItem(req);
             Response.send(DnDService.getSharableItem(item), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static updateMiscNote: RequestHandler = async (req: IRequest, res) => {
+        try {
+            req.body.category = ReservedNoteCategory.DND_MISC;
+            req.body.access = ['all'];
+            const note = await NotesService.updateNote(req);
+            Response.send(NotesService.getSharableNote(note), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
