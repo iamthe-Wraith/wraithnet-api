@@ -6,6 +6,11 @@ export interface IBaseResource {
     lastModified?: Date;
 }
 
+export interface ICollectionResponse<T> {
+    count: number;
+    results: T[];
+}
+
 export interface ICustomErrorBody {
     name: string;
     code: number;

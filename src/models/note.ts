@@ -39,11 +39,6 @@ export interface INoteSharableRef extends IBaseNoteRef {
     id: string;
 }
 
-export interface INotes {
-    count: number;
-    notes: INote[];
-}
-
 const NoteSchema = new mongoose.Schema({
     owner: {
         type: Schema.Types.ObjectId,

@@ -34,8 +34,8 @@ export class NotesController {
     static getNotes: RequestHandler = async (req: IRequest, res) => {
         try {
             const notes = await NotesService.getNotes(req);
-            const notesRef = notes.notes.map(note => NotesService.getSharableNoteRef(note));
-            Response.send({ ...notes, notes: notesRef }, req, res);
+            const noteRefs = notes.results.map(note => NotesService.getSharableNoteRef(note));
+            Response.send({ ...notes, results: noteRefs }, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

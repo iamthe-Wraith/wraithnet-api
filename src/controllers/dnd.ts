@@ -167,8 +167,8 @@ export class DnDController {
     static getMiscNotes: RequestHandler = async (req: IRequest, res) => {
         try {
             req.query.category = ReservedNoteCategory.DND_MISC;
-            const notes = await NotesService.getNotes(req);
-            Response.send({ ...notes, notes: notes.notes.map(note => NotesService.getSharableNoteRef(note)) }, req, res);
+            const notes = await NotesService.getNotes(req);            
+            Response.send({ ...notes, results: notes.results.map(note => NotesService.getSharableNoteRef(note)) }, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

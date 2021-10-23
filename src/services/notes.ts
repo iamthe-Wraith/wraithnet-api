@@ -1,8 +1,8 @@
 import { Document, Types } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { IRequest } from '../types';
-import { INote, INoteRef, INotes, INoteSharableRef, Note, ReservedNoteCategory } from '../models/note';
+import { ICollectionResponse, IRequest } from '../types';
+import { INote, INoteRef, INoteSharableRef, Note, ReservedNoteCategory } from '../models/note';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import { ERROR } from '../constants';
 import { ROLE } from '../models/user';
@@ -116,7 +116,7 @@ export class NotesService {
         }
     }
 
-    static async getNotes (req: IRequest): Promise<INotes> {
+    static async getNotes (req: IRequest): Promise<ICollectionResponse<INoteRef>> {
         const {
             category,
             page,
@@ -161,7 +161,7 @@ export class NotesService {
                 .exec();
 
             return {
-                notes: results,
+                results,
                 count: await Note.countDocuments(query)
             };
         } catch (err) {
