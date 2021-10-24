@@ -179,6 +179,7 @@ export class NotesService {
     static getSharableNoteRef (note: INote | INoteRef) {
         const noteRef: INoteSharableRef = {
             id: note._id,
+            access: note.access,
             owner: note.owner,
             createdAt: note.createdAt,
             name: note.name,
