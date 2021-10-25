@@ -98,26 +98,35 @@ export class NotesService {
         if (!id) throw new CustomError('a note id is required', ERROR.INVALID_ARG);
 
         try {
-            return await NotesService.getNote(req, id);
+            return await NotesService.getNote(req, [{_id: id}]);
         } catch (err) {
             throw asCustomError(err);
         }
     }
 
+    /**
+     * gets a note by it's slug.
+     * 
+     * @important - assumes the combination of category and slug are unique
+     * @param req {IRequest}
+     * @returns INote & Document<any, any, INote>
+     */
     static async getNoteBySlug (req: IRequest): Promise<INote & Document<any, any, INote>> {
-        const { slug } = req.params;
+        const { category, slug } = req.params;
+        if (!category) throw new CustomError('a category is required', ERROR.INVALID_ARG);
         if (!slug) throw new CustomError('a slug is required', ERROR.INVALID_ARG);
-
+        
         try {
-            return await NotesService.getNote(req, null, slug);
+            return await NotesService.getNote(req, [{ slug }, { category }]);
         } catch (err) {
             throw asCustomError(err);
         }
     }
 
-    static async getNote (req: IRequest, id?: string, slug?: string): Promise<INote & Document<any, any, INote>> {
+    static async getNote (req: IRequest, q: { [key: string]: any }[] = []): Promise<INote & Document<any, any, INote>> {
         const query: any = {
             $and: [
+                ...q,
                 { markedForDeletion: false },
                 { $or: [
                     { owner: req.requestor.id },
@@ -125,9 +134,6 @@ export class NotesService {
                 ] }
             ],
         };
-
-        if (id) query.$and.push({ _id: id });
-        if (slug) (query.$and.pysh({ slug }));
 
         try {
             const note = await Note.findOne(query);

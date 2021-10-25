@@ -76,7 +76,7 @@ router.route(NOTES_ROUTE)
     .post(authMiddleware, NotesController.createNote)
     .get(authMiddleware, NotesController.getNotes);
 
-router.route(`${NOTES_ROUTE}/s/:slug`)
+router.route(`${NOTES_ROUTE}/s/:category/:slug`)
     .get(authMiddleware, NotesController.getNoteBySlug);
 
 router.route(`${NOTES_ROUTE}/:id`)
