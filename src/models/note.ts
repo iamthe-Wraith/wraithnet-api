@@ -17,6 +17,7 @@ export interface IBaseNoteRef extends IBaseResource {
     markedForDeletion?: boolean;
     name: string;
     category: string;
+    slug: string;
 }
 
 export interface IBaseNote extends IBaseNoteRef {
@@ -48,6 +49,10 @@ const NoteSchema = new mongoose.Schema({
         type: String
     }],
     name: {
+        required: true,
+        type: String,
+    },
+    slug: {
         required: true,
         type: String,
     },

@@ -4,3 +4,12 @@ export const isValidDate = (d: string | Date) => {
   const date = d instanceof Date ? d : new Date(d);
   return !isNaN(date.getTime());
 }
+
+export const generateSlug = (text: string) => {
+    return text
+        .toLowerCase()
+        .split(' ') // remove spaces and replace with -
+        .join('-')
+        .split(/[`~!@#$%^&*()-_+{}[\]\\|,.//?;':"]/g) // remove special characters
+        .join('');
+} 

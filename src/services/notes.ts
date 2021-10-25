@@ -6,6 +6,7 @@ import { INote, INoteRef, INoteSharableRef, Note, ReservedNoteCategory } from '.
 import CustomError, { asCustomError } from '../utils/custom-error';
 import { ERROR } from '../constants';
 import { ROLE } from '../models/user';
+import { generateSlug } from '../utils';
 
 dayjs.extend(utc);
 
@@ -58,6 +59,7 @@ export class NotesService {
             name,
             category,
             text,
+            slug: generateSlug(name),
             createdAt: dayjs.utc().format(),
         });
 
@@ -72,7 +74,7 @@ export class NotesService {
     static async deleteNote (req: IRequest): Promise<void> {
         let note: INote & Document<any, any, INote>;
         try {
-            note = await NotesService.getNote(req);
+            note = await NotesService.getNoteById(req);
         } catch (err) {
             throw asCustomError(err);
         }
@@ -91,21 +93,41 @@ export class NotesService {
         }
     }
 
-    static async getNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
+    static async getNoteById (req: IRequest): Promise<INote & Document<any, any, INote>> {
         const { id } = req.params;
-
         if (!id) throw new CustomError('a note id is required', ERROR.INVALID_ARG);
 
+        try {
+            return await NotesService.getNote(req, id);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async getNoteBySlug (req: IRequest): Promise<INote & Document<any, any, INote>> {
+        const { slug } = req.params;
+        if (!slug) throw new CustomError('a slug is required', ERROR.INVALID_ARG);
+
+        try {
+            return await NotesService.getNote(req, null, slug);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async getNote (req: IRequest, id?: string, slug?: string): Promise<INote & Document<any, any, INote>> {
         const query: any = {
             $and: [
                 { markedForDeletion: false },
-                { _id: id },
                 { $or: [
                     { owner: req.requestor.id },
                     { access: { "$in": [req.requestor.id, 'all'] } }
                 ] }
             ],
         };
+
+        if (id) query.$and.push({ _id: id });
+        if (slug) (query.$and.pysh({ slug }));
 
         try {
             const note = await Note.findOne(query);
@@ -184,6 +206,7 @@ export class NotesService {
             createdAt: note.createdAt,
             name: note.name,
             category: note.category,
+            slug: note.slug,
         };
 
         if (note.lastModified) noteRef.lastModified = dayjs.utc().toDate();
@@ -203,12 +226,16 @@ export class NotesService {
 
         let note: INote & Document<any, any, INote>;
         try {
-            note = await NotesService.getNote(req);
+            note = await NotesService.getNoteById(req);
         } catch (err) {
             throw asCustomError(err);
         }
 
-        if (name) note.name = name;
+        if (name) {
+            note.name = name;
+            note.slug = generateSlug(name);
+        }
+
         if (text) note.text = text;
 
         // if a category is provided, check if it is a reserved

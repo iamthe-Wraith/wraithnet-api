@@ -22,14 +22,23 @@ export class NotesController {
         }
     }
 
-    static getNote: RequestHandler = async (req: IRequest, res) => {
+    static getNoteById: RequestHandler = async (req: IRequest, res) => {
         try {
-            const note = await NotesService.getNote(req);
+            const note = await NotesService.getNoteById(req);
             Response.send(NotesService.getSharableNote(note), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    } 
+    }
+
+    static getNoteBySlug: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const note = await NotesService.getNoteBySlug(req);
+            Response.send(NotesService.getSharableNote(note), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
 
     static getNotes: RequestHandler = async (req: IRequest, res) => {
         try {

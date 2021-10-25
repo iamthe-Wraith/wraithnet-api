@@ -76,8 +76,11 @@ router.route(NOTES_ROUTE)
     .post(authMiddleware, NotesController.createNote)
     .get(authMiddleware, NotesController.getNotes);
 
+router.route(`${NOTES_ROUTE}/s/:slug`)
+    .get(authMiddleware, NotesController.getNoteBySlug);
+
 router.route(`${NOTES_ROUTE}/:id`)
-    .get(authMiddleware, NotesController.getNote)
+    .get(authMiddleware, NotesController.getNoteById)
     .patch(authMiddleware, NotesController.updateNote)
     .delete(authMiddleware, NotesController.deleteNote);
 
@@ -125,38 +128,5 @@ router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .get(authMiddleware, DnDController.getPC)
     .patch(authMiddleware, DnDController.updatePC)
     .delete(authMiddleware, DnDController.deletePC);
-
-/*
- - add note for pc (notes will be separate resource and linked to pc) (each pc will have only 1 note)
- - get note for pc
- - update note for pc
- - delete note for pc
-
- - add event for pc
- - get all events for a pc (events will be a separate resource and will be linked to a pc)
- - update an event for a pc
- - delete an event for a pc
-
- - add contact for pc (will require npc id and note id)
- - get contacts for a pc (should only reutrn the npc ref data, not full details data)
- - update contact for a pc (what would need to be updated here?)
- - update contact notes for a pc
- - delete a contact for a pc
-
- - add an inventory item for a pc (should just an item id and a note id --- notes for where they found it or something...may be helpful)
- - get all inventory items for a pc
- - update inventory item notes for a pc (should only update the notes, not the item iteself)
- - delete an inventory item for a pc (should not delete the item resource, only the pc's reference to it)
-
- - add race
- - get all races
- - update race
- - delete race
-
- - add class
- - get all classes
- - update class
- - delete class
-*/
 
 export const v1Router = router;
