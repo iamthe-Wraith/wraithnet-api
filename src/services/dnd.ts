@@ -4,7 +4,7 @@ import utc from 'dayjs/plugin/utc';
 
 import { ERROR } from "../constants";
 import { DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable } from "../models/dnd/daily-checklist-item";
-import { IRequest } from "../types";
+import { ICollectionResponse, IRequest } from "../types";
 import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
@@ -13,7 +13,7 @@ import { IPC, IPCRef, IPCRequest, IPCSharable, IPCSharableRef, PC } from '../mod
 import { dndExp } from '../../static/dnd-exp';
 import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
 import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
-import { INote, Note } from '../models/note';
+import { INote, INoteRef, Note } from '../models/note';
 import { NotesService } from './notes';
 
 dayjs.extend(utc);
@@ -267,8 +267,6 @@ export class DnDService {
     }
 
     static async createSession (req: IRequest): Promise<INote> {
-        console.log('creating session');
-        
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
 
@@ -553,6 +551,56 @@ export class DnDService {
                 .find({})
                 .sort({ name: 1 });
             return races;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static getSessions = async (req: IRequest): Promise<ICollectionResponse<INoteRef>> => {
+        const {
+            page,
+            pageSize,
+        } = (req.query as {
+            page: string;
+            pageSize: string;
+        });
+        
+        const campaign = await DnDService.getCampaign(req);
+        if (!campaign) return;
+
+        const query = {
+            $and: [
+                { owner: req.requestor.id },
+                { _id: { $in: campaign.sessions } },
+                { category: `${campaign.id}-session` },
+                { markedForDeletion: false },
+            ]
+        };
+
+        let _page = 0;
+        if (page) {
+            _page = parseInt(page);
+            if (isNaN(_page)) throw new CustomError('invalid page found', ERROR.INVALID_ARG);
+        }
+
+        let _pageSize = 25;
+        if (pageSize) {
+            _pageSize = parseInt(pageSize);
+            if (isNaN(_pageSize)) throw new CustomError('invalid pageSize found', ERROR.INVALID_ARG);
+        }
+
+        try {
+            const results = await Note
+                .find(query)
+                .skip(_page * _pageSize)
+                .limit(_pageSize)
+                .sort({ _id: 'desc' })
+                .exec();
+
+            return {
+                results,
+                count: await Note.countDocuments(query)
+            };
         } catch (err) {
             throw asCustomError(err);
         }

@@ -11,6 +11,7 @@ import { TestController } from '../../controllers/test';
 import { DnDController } from '../../controllers/dnd';
 import { NotesController } from '../../controllers/notes';
 import { NotesService } from '../../services/notes';
+import { DnDService } from '../../services/dnd';
 
 const router = Router();
 
@@ -124,7 +125,8 @@ router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .delete(authMiddleware, DnDController.deletePC);
 
 router.route(`${DND_ROUTE}/:campaignId/session`)
-    .post(authMiddleware, DnDController.createSession);
+    .post(authMiddleware, DnDController.createSession)
+    .get(authMiddleware, DnDController.getSessions);
 
 router.route(`${DND_ROUTE}/:campaignId?`)
     .get(authMiddleware, DnDController.getCampaigns)

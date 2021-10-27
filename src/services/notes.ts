@@ -183,7 +183,7 @@ export class NotesService {
         }
 
         try {
-            const results = await Note.find(query)
+            const results = await Note
                 .find(query)
                 .skip(_page * _pageSize)
                 .limit(_pageSize)

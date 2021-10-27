@@ -212,6 +212,18 @@ export class DnDController {
         }
     }
 
+    static getSessions: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const sessionNotes = await DnDService.getSessions(req);
+            Response.send({
+                ...sessionNotes,
+                results: sessionNotes.results.map(note => NotesService.getSharableNoteRef(note))
+            }, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static updateCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
             const campaign = await DnDService.updateCampaign(req);
