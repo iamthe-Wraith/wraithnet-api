@@ -4,6 +4,7 @@ import utc from 'dayjs/plugin/utc';
 
 import { IBaseResource } from '../../types';
 import { IUser } from '../user';
+import { INote } from '../note';
 
 dayjs.extend(utc);
 
@@ -20,6 +21,7 @@ export interface IBaseCampaign extends ICampaignRequest, IBaseResource {
 
 export interface ICampaign extends IBaseCampaign, Document<string> {
     _id: string;
+    sessions: INote['id'];
 }
 
 export interface ICampaignSharable extends IBaseCampaign {
@@ -37,6 +39,10 @@ const CampaignSchema = new mongoose.Schema({
     currentDate: {
         type: String,
     },
+    sessions: [{
+        type: Schema.Types.ObjectId,
+        ref: 'note'
+    }],
     owner: {
         type: Schema.Types.ObjectId,
         ref: 'user'

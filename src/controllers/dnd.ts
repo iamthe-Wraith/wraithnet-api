@@ -29,6 +29,8 @@ export class DnDController {
     }
 
     static createCampaign: RequestHandler = async (req: IRequest, res) => {
+        console.log('creating campaign');
+        
         try {
             const campaign = await DnDService.createCampaign(req);
             Response.send(DnDService.getSharableCampaign(campaign), req, res);
@@ -61,6 +63,15 @@ export class DnDController {
         try {
             const race = await DnDService.createRace(req);
             Response.send(DnDService.getSharableRace(race), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static createSession: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const sessionNote = await DnDService.createSession(req);
+            Response.send(NotesService.getSharableNote(sessionNote), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

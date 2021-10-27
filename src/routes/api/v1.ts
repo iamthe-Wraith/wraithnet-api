@@ -102,12 +102,6 @@ router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc`)
 router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc/:id`)
     .get(authMiddleware, DnDController.getMiscNote);
 
-router.route(`${DND_ROUTE}/:campaignId?`)
-    .get(authMiddleware, DnDController.getCampaigns)
-    .post(authMiddleware, DnDController.createCampaign)
-    .patch(authMiddleware, DnDController.updateCampaign)
-    .delete(authMiddleware, DnDController.deleteCampaign);
-
 router.route(`${DND_ROUTE}/:campaignId/daily-checklist/:id?`)
     .get(authMiddleware, DnDController.getChecklist)
     .post(authMiddleware, DnDController.addChecklistItem)
@@ -128,5 +122,14 @@ router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .get(authMiddleware, DnDController.getPC)
     .patch(authMiddleware, DnDController.updatePC)
     .delete(authMiddleware, DnDController.deletePC);
+
+router.route(`${DND_ROUTE}/:campaignId/session`)
+    .post(authMiddleware, DnDController.createSession);
+
+router.route(`${DND_ROUTE}/:campaignId?`)
+    .get(authMiddleware, DnDController.getCampaigns)
+    .post(authMiddleware, DnDController.createCampaign)
+    .patch(authMiddleware, DnDController.updateCampaign)
+    .delete(authMiddleware, DnDController.deleteCampaign);
 
 export const v1Router = router;

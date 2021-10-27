@@ -13,6 +13,8 @@ import { IPC, IPCRef, IPCRequest, IPCSharable, IPCSharableRef, PC } from '../mod
 import { dndExp } from '../../static/dnd-exp';
 import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
 import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
+import { INote, Note } from '../models/note';
+import { NotesService } from './notes';
 
 dayjs.extend(utc);
 
@@ -194,10 +196,7 @@ export class DnDService {
             const campaigns = await DnDService.getCampaigns(req);
             const campaign = campaigns.find(c => `${c.id}` === campaignId);
             if (!campaign) throw new CustomError('invalid campaign', ERROR.INVALID_ARG);
-        } catch (err) {
-            console.log('error getting campaign');
-            console.log(err);
-            
+        } catch (err) {            
             throw asCustomError(err);
         }
 
@@ -206,9 +205,6 @@ export class DnDService {
             _race = races.find(r => `${r._id}` === race);
             if (!_race) throw new CustomError('invalid race', ERROR.INVALID_ARG);
         } catch (err) {
-            console.log('error getting races');
-            console.log(err);
-
             throw asCustomError(err);
         }
 
@@ -265,6 +261,49 @@ export class DnDService {
         try {
             await race.save();
             return race;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async createSession (req: IRequest): Promise<INote> {
+        console.log('creating session');
+        
+        const campaign = await DnDService.getCampaign(req);
+        if (!campaign) return;
+
+        const { name } = (req.body as { name: string });
+        const _name = !!name ? name : `session-${campaign.sessions?.length ?? 0 }`;
+
+        const query = {
+            $and: [
+                { owner: req.requestor.id },
+                { name: _name },
+                { _id: { $in: campaign.sessions } },
+            ]
+        };
+
+        try {
+            const note = await Note.findOne(query);
+            if (!!note) throw new CustomError('a session with this name already exists', ERROR.UNPROCESSABLE);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        const _noteReq = { ...req };
+        _noteReq.body = {
+            name: _name,
+            category: `${campaign.id}-session`,
+        }
+        const note = await NotesService.createNote(_noteReq as IRequest);
+        
+        try {
+            await Campaign.updateOne({
+                _id: campaign.id,
+                $push: { sessions: note.id }
+            });
+
+            return note;
         } catch (err) {
             throw asCustomError(err);
         }
@@ -398,6 +437,23 @@ export class DnDService {
             const race = await DnDRace.findOneAndDelete({ _id: raceId });
 
             if (!race) throw new CustomError(`race with id: ${raceId} not found`, ERROR.NOT_FOUND);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async getCampaign (req: IRequest): Promise<ICampaign & Document<any, any, IPC>> {
+        const { campaignId } = req.params;
+
+        if (!campaignId) throw new CustomError('no campaignId found', ERROR.INVALID_ARG);
+
+        try {
+            const campaign = await Campaign.findOne({
+                owner: req.requestor.id,
+                markedForDeletion: false,
+                _id: campaignId,
+            });
+            return campaign;
         } catch (err) {
             throw asCustomError(err);
         }

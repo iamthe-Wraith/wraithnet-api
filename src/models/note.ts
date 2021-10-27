@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
@@ -24,7 +24,7 @@ export interface IBaseNote extends IBaseNoteRef {
     text: string;
 }
 
-export interface INote extends IBaseNote {
+export interface INote extends IBaseNote, Document<string> {
     _id: string;
 }
 
@@ -32,7 +32,7 @@ export interface INoteSharable extends IBaseNote {
     id: string;
 }
 
-export interface INoteRef extends IBaseNoteRef {
+export interface INoteRef extends IBaseNoteRef, Document<string> {
     _id: string;
 }
 
