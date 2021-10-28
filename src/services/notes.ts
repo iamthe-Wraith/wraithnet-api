@@ -12,8 +12,6 @@ dayjs.extend(utc);
 
 export class NotesService {
     static async createNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
-        console.log('body: ', req.body);
-
         const { name, text = '', category, access = [] } = (req.body as {
             name: string;
             text?: string;
