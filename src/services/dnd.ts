@@ -291,7 +291,7 @@ export class DnDService {
         const _noteReq = { ...req };
         _noteReq.body = {
             name: _name,
-            category: `${campaign.id}-session`,
+            category: 'session',
         }
         const note = await NotesService.createNote(_noteReq as IRequest);
         
@@ -572,7 +572,7 @@ export class DnDService {
             $and: [
                 { owner: req.requestor.id },
                 { _id: { $in: campaign.sessions } },
-                { category: `${campaign.id}-session` },
+                { category: 'session' },
                 { markedForDeletion: false },
             ]
         };
