@@ -271,28 +271,11 @@ export class DnDService {
         if (!campaign) return;
 
         const { name } = (req.body as { name: string });
-        const _name = !!name ? name : `session-${campaign.sessions?.length ?? 0 }`;
-
-        const query = {
-            $and: [
-                { owner: req.requestor.id },
-                { name: _name },
-                { _id: { $in: campaign.sessions } },
-            ]
-        };
-
-        try {
-            const note = await Note.findOne(query);
-            if (!!note) throw new CustomError('a session with this name already exists', ERROR.UNPROCESSABLE);
-        } catch (err) {
-            throw asCustomError(err);
-        }
+        
+        if (!name) throw new CustomError('a session name is required', ERROR.INVALID_ARG);
 
         const _noteReq = { ...req };
-        _noteReq.body = {
-            name: _name,
-            category: 'session',
-        }
+        _noteReq.body = { name, category: 'dnd_session' }
         const note = await NotesService.createNote(_noteReq as IRequest);
         
         try {
@@ -572,7 +555,7 @@ export class DnDService {
             $and: [
                 { owner: req.requestor.id },
                 { _id: { $in: campaign.sessions } },
-                { category: 'session' },
+                { category: 'dnd_session' },
                 { markedForDeletion: false },
             ]
         };

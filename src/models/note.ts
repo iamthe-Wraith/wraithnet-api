@@ -8,7 +8,7 @@ import { IUser } from './user';
 dayjs.extend(utc);
 
 export enum ReservedNoteCategory {
-    DND_MISC = '__dnd_misc_resource',
+    DND_MISC = 'dnd_misc_resource',
 }
 
 export interface IBaseNoteRef extends IBaseResource {
