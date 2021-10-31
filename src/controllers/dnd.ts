@@ -75,6 +75,15 @@ export class DnDController {
         }
     }
 
+    static createQuest: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const quest = await DnDService.createNote(req, 'quest');
+            Response.send(NotesService.getSharableNote(quest), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static createRace: RequestHandler = async (req: IRequest, res) => {
         try {
             const race = await DnDService.createRace(req);
@@ -238,6 +247,18 @@ export class DnDController {
         try {
             const pcs = await DnDService.getPCs(req);
             Response.send(pcs.map(pc => DnDService.getSharablePCRef(pc)), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getQuests: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const quests = await DnDService.getNotes(req, 'quest');
+            Response.send({
+                ...quests,
+                results: quests.results.map(note => NotesService.getSharableNoteRef(note))
+            }, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

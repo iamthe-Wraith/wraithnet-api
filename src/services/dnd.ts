@@ -18,8 +18,8 @@ import { NotesService } from './notes';
 
 dayjs.extend(utc);
 
-type NoteType = 'location' | 'npc' | 'session';
-type NoteIdList = 'locations' | 'npcs' | 'sessions';
+type NoteType = 'location' | 'npc' | 'quest' | 'session';
+type NoteIdList = 'locations' | 'npcs' | 'quests' | 'sessions';
 
 interface IExpResult {
     exp: number;

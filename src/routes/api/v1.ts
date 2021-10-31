@@ -132,6 +132,10 @@ router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .patch(authMiddleware, DnDController.updatePC)
     .delete(authMiddleware, DnDController.deletePC);
 
+router.route(`${DND_ROUTE}/:campaignId/quest`)
+    .post(authMiddleware, DnDController.createQuest)
+    .get(authMiddleware, DnDController.getQuests);
+
 router.route(`${DND_ROUTE}/:campaignId/session`)
     .post(authMiddleware, DnDController.createSession)
     .get(authMiddleware, DnDController.getSessions);
