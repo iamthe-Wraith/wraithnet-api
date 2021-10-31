@@ -48,6 +48,15 @@ export class DnDController {
         } 
     }
 
+    static createLocation: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const location = await DnDService.createNote(req, 'location');
+            Response.send(NotesService.getSharableNote(location), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static createNPC: RequestHandler = async (req: IRequest, res) => {
         try {
             const npc = await DnDService.createNote(req, 'npc');
@@ -187,6 +196,18 @@ export class DnDController {
             req.query.category = ReservedNoteCategory.DND_MISC;
             const notes = await NotesService.getNotes(req);            
             Response.send({ ...notes, results: notes.results.map(note => NotesService.getSharableNoteRef(note)) }, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getLocations: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const locations = await DnDService.getNotes(req, 'location');
+            Response.send({
+                ...locations,
+                results: locations.results.map(note => NotesService.getSharableNoteRef(note))
+            }, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

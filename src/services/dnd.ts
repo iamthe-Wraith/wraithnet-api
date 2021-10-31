@@ -18,7 +18,8 @@ import { NotesService } from './notes';
 
 dayjs.extend(utc);
 
-type NoteIdList = 'npcs' | 'sessions';
+type NoteType = 'location' | 'npc' | 'session';
+type NoteIdList = 'locations' | 'npcs' | 'sessions';
 
 interface IExpResult {
     exp: number;
@@ -180,7 +181,7 @@ export class DnDService {
         }
     }
 
-    static async createNote (req: IRequest, type: 'npc' | 'session'): Promise<INote> {
+    static async createNote (req: IRequest, type: NoteType): Promise<INote> {
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
 
@@ -489,7 +490,7 @@ export class DnDService {
         }
     }
 
-    static getNotes = async (req: IRequest, type: 'npc' | 'session' ): Promise<ICollectionResponse<INoteRef>> => {
+    static getNotes = async (req: IRequest, type: NoteType ): Promise<ICollectionResponse<INoteRef>> => {
         const {
             page,
             pageSize,
@@ -500,8 +501,6 @@ export class DnDService {
         
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
-
-        
 
         const query = {
             $and: [
