@@ -10,6 +10,6 @@ export const generateSlug = (text: string) => {
         .toLowerCase()
         .split(' ') // remove spaces and replace with -
         .join('-')
-        .split(/[`~!@#$%^&*()-_+{}[\]\\|,.//?;':"]/g) // remove special characters
+        .split(/[`~!@#$%^&*()\_+{}[\]\\|,.\/?;':"]/g) // remove special characters
         .join('');
 } 

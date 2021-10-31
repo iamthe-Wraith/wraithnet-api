@@ -21,6 +21,7 @@ export interface IBaseCampaign extends ICampaignRequest, IBaseResource {
 
 export interface ICampaign extends IBaseCampaign, Document<string> {
     _id: string;
+    npcs: INote['id'];
     sessions: INote['id'];
 }
 
@@ -39,6 +40,10 @@ const CampaignSchema = new mongoose.Schema({
     currentDate: {
         type: String,
     },
+    npcs: [{
+        type: Schema.Types.ObjectId,
+        ref: 'note'
+    }],
     sessions: [{
         type: Schema.Types.ObjectId,
         ref: 'note'

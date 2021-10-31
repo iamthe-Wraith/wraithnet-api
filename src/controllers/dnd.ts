@@ -29,8 +29,6 @@ export class DnDController {
     }
 
     static createCampaign: RequestHandler = async (req: IRequest, res) => {
-        console.log('creating campaign');
-        
         try {
             const campaign = await DnDService.createCampaign(req);
             Response.send(DnDService.getSharableCampaign(campaign), req, res);
@@ -48,6 +46,15 @@ export class DnDController {
         } catch (err: any) {
             Response.error(err, req, res);
         } 
+    }
+
+    static createNPC: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const npc = await DnDService.createNote(req, 'npc');
+            Response.send(NotesService.getSharableNote(npc), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
     }
 
     static createPC: RequestHandler = async (req: IRequest, res) => {
@@ -70,7 +77,7 @@ export class DnDController {
 
     static createSession: RequestHandler = async (req: IRequest, res) => {
         try {
-            const sessionNote = await DnDService.createSession(req);
+            const sessionNote = await DnDService.createNote(req, 'session');
             Response.send(NotesService.getSharableNote(sessionNote), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
@@ -185,6 +192,18 @@ export class DnDController {
         }
     }
 
+    static getNPCs: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const npcs = await DnDService.getNotes(req, 'npc');
+            Response.send({
+                ...npcs,
+                results: npcs.results.map(note => NotesService.getSharableNoteRef(note))
+            }, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static getPC: RequestHandler = async (req: IRequest, res) => {
         try {
             const pc = await DnDService.getPC(req);
@@ -214,10 +233,10 @@ export class DnDController {
 
     static getSessions: RequestHandler = async (req: IRequest, res) => {
         try {            
-            const sessionNotes = await DnDService.getSessions(req);
+            const sessions = await DnDService.getNotes(req, 'session');
             Response.send({
-                ...sessionNotes,
-                results: sessionNotes.results.map(note => NotesService.getSharableNoteRef(note))
+                ...sessions,
+                results: sessions.results.map(note => NotesService.getSharableNoteRef(note))
             }, req, res);
         } catch (err: any) {
             Response.error(err, req, res);

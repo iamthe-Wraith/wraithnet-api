@@ -109,6 +109,10 @@ router.route(`${DND_ROUTE}/:campaignId/daily-checklist/:id?`)
     .patch(authMiddleware, DnDController.updateChecklistItem)
     .delete(authMiddleware, DnDController.deleteChecklistItem);
 
+router.route(`${DND_ROUTE}/:campaignId/npc`)
+    .post(authMiddleware, DnDController.createNPC)
+    .get(authMiddleware, DnDController.getNPCs);
+
 router.route(`${DND_ROUTE}/:campaignId/party-exp`)
     .patch(authMiddleware, DnDController.updatePartyXP);
 

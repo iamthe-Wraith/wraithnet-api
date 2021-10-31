@@ -18,6 +18,8 @@ import { NotesService } from './notes';
 
 dayjs.extend(utc);
 
+type NoteIdList = 'npcs' | 'sessions';
+
 interface IExpResult {
     exp: number;
     expForNextLevel: number;
@@ -178,6 +180,33 @@ export class DnDService {
         }
     }
 
+    static async createNote (req: IRequest, type: 'npc' | 'session'): Promise<INote> {
+        const campaign = await DnDService.getCampaign(req);
+        if (!campaign) return;
+
+        const { name } = (req.body as { name: string });
+        
+        if (!name) throw new CustomError('a name is required', ERROR.INVALID_ARG);
+
+        const _noteReq = { ...req };
+        _noteReq.body = {
+            name,
+            category: `dnd_${type}`,
+        }
+        const note = await NotesService.createNote(_noteReq as IRequest);
+        
+        try {
+            await Campaign.updateOne({
+                _id: campaign.id,
+                $push: { [`${type}s`]: note.id }
+            });
+
+            return note;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static async createPC (req: IRequest): Promise<IPC> {
         const { age, name, race, classes = [], exp } = (req.body as IPCRequest);
         const { campaignId } = req.params;
@@ -261,30 +290,6 @@ export class DnDService {
         try {
             await race.save();
             return race;
-        } catch (err) {
-            throw asCustomError(err);
-        }
-    }
-
-    static async createSession (req: IRequest): Promise<INote> {
-        const campaign = await DnDService.getCampaign(req);
-        if (!campaign) return;
-
-        const { name } = (req.body as { name: string });
-        
-        if (!name) throw new CustomError('a session name is required', ERROR.INVALID_ARG);
-
-        const _noteReq = { ...req };
-        _noteReq.body = { name, category: 'dnd_session' }
-        const note = await NotesService.createNote(_noteReq as IRequest);
-        
-        try {
-            await Campaign.updateOne({
-                _id: campaign.id,
-                $push: { sessions: note.id }
-            });
-
-            return note;
         } catch (err) {
             throw asCustomError(err);
         }
@@ -484,6 +489,58 @@ export class DnDService {
         }
     }
 
+    static getNotes = async (req: IRequest, type: 'npc' | 'session' ): Promise<ICollectionResponse<INoteRef>> => {
+        const {
+            page,
+            pageSize,
+        } = (req.query as {
+            page: string;
+            pageSize: string;
+        });
+        
+        const campaign = await DnDService.getCampaign(req);
+        if (!campaign) return;
+
+        
+
+        const query = {
+            $and: [
+                { owner: req.requestor.id },
+                { _id: { $in: campaign[`${type}s` as NoteIdList] } },
+                { category: `dnd_${type}` },
+                { markedForDeletion: false },
+            ]
+        };
+
+        let _page = 0;
+        if (page) {
+            _page = parseInt(page);
+            if (isNaN(_page)) throw new CustomError('invalid page found', ERROR.INVALID_ARG);
+        }
+
+        let _pageSize = 25;
+        if (pageSize) {
+            _pageSize = parseInt(pageSize);
+            if (isNaN(_pageSize)) throw new CustomError('invalid pageSize found', ERROR.INVALID_ARG);
+        }
+
+        try {
+            const results = await Note
+                .find(query)
+                .skip(_page * _pageSize)
+                .limit(_pageSize)
+                .sort({ _id: 'desc' })
+                .exec();
+
+            return {
+                results,
+                count: await Note.countDocuments(query)
+            };
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static async getPC (req: IRequest): Promise<IPC & Document<any, any, IPC>> {
         const { campaignId, id } = req.params;
 
@@ -534,56 +591,6 @@ export class DnDService {
                 .find({})
                 .sort({ name: 1 });
             return races;
-        } catch (err) {
-            throw asCustomError(err);
-        }
-    }
-
-    static getSessions = async (req: IRequest): Promise<ICollectionResponse<INoteRef>> => {
-        const {
-            page,
-            pageSize,
-        } = (req.query as {
-            page: string;
-            pageSize: string;
-        });
-        
-        const campaign = await DnDService.getCampaign(req);
-        if (!campaign) return;
-
-        const query = {
-            $and: [
-                { owner: req.requestor.id },
-                { _id: { $in: campaign.sessions } },
-                { category: 'dnd_session' },
-                { markedForDeletion: false },
-            ]
-        };
-
-        let _page = 0;
-        if (page) {
-            _page = parseInt(page);
-            if (isNaN(_page)) throw new CustomError('invalid page found', ERROR.INVALID_ARG);
-        }
-
-        let _pageSize = 25;
-        if (pageSize) {
-            _pageSize = parseInt(pageSize);
-            if (isNaN(_pageSize)) throw new CustomError('invalid pageSize found', ERROR.INVALID_ARG);
-        }
-
-        try {
-            const results = await Note
-                .find(query)
-                .skip(_page * _pageSize)
-                .limit(_pageSize)
-                .sort({ _id: 'desc' })
-                .exec();
-
-            return {
-                results,
-                count: await Note.countDocuments(query)
-            };
         } catch (err) {
             throw asCustomError(err);
         }
