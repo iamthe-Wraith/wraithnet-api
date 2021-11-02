@@ -25,15 +25,13 @@ export class TagsController {
 
     static get: RequestHandler = async (req: IRequest, res) => {
         try {
-            const tags = await TagsService.get(req);
+            const tags = await TagsService.getTags(req);
             if ((tags as ITags)?.tags) {
                 const result = {
                     ...tags,
                     tags: (tags as ITags).tags.map(t => TagsService.getSharable(t)),
                 }
                 Response.send(result, req, res);
-            } else {
-                Response.send(TagsService.getSharable((tags as ITag)), req, res);
             }
         } catch (err: any) {
             Response.error(err, req, res);

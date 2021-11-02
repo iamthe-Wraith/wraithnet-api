@@ -12,6 +12,21 @@ export class TagsService {
         if (!text) throw asCustomError(new CustomError('content is required', ERROR.INVALID_ARG));
         if (typeof text !== 'string') throw asCustomError(new CustomError('invalid content', ERROR.INVALID_ARG));
 
+        const request = <IRequest>{
+            body: {},
+            query: {},
+            params: {},
+            requestor: req.requestor,
+        };
+
+        request.query.text = text;
+        request.body.text = text;
+
+        const existingTags = await TagsService.getTags(request);
+
+        // tag already exists
+        if (existingTags.count > 0) return existingTags.tags[0];
+
         try {
             const tag = new Tag({
                 text,
@@ -53,17 +68,18 @@ export class TagsService {
         }
     }
 
-    static async get (req: IRequest): Promise<ITag | ITags> {
+    static async getTags (req: IRequest): Promise<ITags> {
         const {
+            ids,
             text,
             page,
             pageSize,
         } = (req.query as {
+            ids: string[];
             text: string;
             page: string;
             pageSize: string;
         });
-        const { id } = req.params;
 
         const query: any = {
             $and: [{ owner: req.requestor.id }, { markedForDeletion: false }],
@@ -81,15 +97,14 @@ export class TagsService {
             if (isNaN(_pageSize)) throw new CustomError('invalid pageSize found', ERROR.INVALID_ARG);
         }
 
-        if (id) {
-            if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
+        if (text) {
+            if (typeof text !== 'string') throw new CustomError('invalid text', ERROR.INVALID_ARG);
+            query.$and.push({ text: { $eq: text }});
+        }
 
-            query.$and.push({ _id: id });
-        } else {
-            if (text) {
-                if (typeof text !== 'string') throw new CustomError('invalid text', ERROR.INVALID_ARG);
-                query.$and.push({ text: { $regex: text }});
-            }
+        if (ids) {
+            if (!Array.isArray(ids)) throw new CustomError('invalid ids found. must be an array', ERROR.INVALID_ARG);
+            query.$and.push({ _id: { $in: ids } });
         }
 
         try {
@@ -100,17 +115,29 @@ export class TagsService {
                 .sort({ text: 'asc' })
                 .exec();
         
-            if (id) {
-                if (results.length) {
-                    return results[0];
-                } else {
-                    throw new CustomError(`tag with id: ${id} not found`, ERROR.NOT_FOUND);
-                }
+            return {
+                tags: results,
+                count: await Tag.countDocuments(query)
+            };
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static getTagById = async (req: IRequest) => {
+        const { id } = req.params;
+        if (!id) throw new CustomError('no id found', ERROR.INVALID_ARG);
+
+        const query = {
+            $and: [{ owner: req.requestor.id }, { markedForDeletion: false }, { _id: id }],
+        };
+
+        try {
+            const tag = await Tag.findOne(query);
+            if (tag) {
+                return tag;
             } else {
-                return {
-                    tags: results,
-                    count: await Tag.countDocuments(query)
-                };
+                throw new CustomError(`tag with id: ${id} not found`, ERROR.NOT_FOUND);
             }
         } catch (err) {
             throw asCustomError(err);

@@ -4,6 +4,7 @@ import utc from 'dayjs/plugin/utc';
 
 import { IBaseResource } from '../types';
 import { IUser } from './user';
+import { ITag, ITagSharable } from './tag';
 
 dayjs.extend(utc);
 
@@ -26,18 +27,22 @@ export interface IBaseNote extends IBaseNoteRef {
 
 export interface INote extends IBaseNote, Document<string> {
     _id: string;
+    tags?: (string | ITag)[];
 }
 
 export interface INoteSharable extends IBaseNote {
     id: string;
+    tags?: ITagSharable[];
 }
 
 export interface INoteRef extends IBaseNoteRef, Document<string> {
     _id: string;
+    tags?: (string | ITag)[];
 }
 
 export interface INoteSharableRef extends IBaseNoteRef {
     id: string;
+    tags?: ITagSharable[];
 }
 
 const NoteSchema = new mongoose.Schema({
@@ -56,6 +61,10 @@ const NoteSchema = new mongoose.Schema({
         required: true,
         type: String,
     },
+    tags: [{
+        type: Schema.Types.ObjectId,
+        ref: 'tag',
+    }],
     text: {
         type: String,
     },

@@ -57,6 +57,15 @@ export class DnDController {
         }
     }
 
+    static createMiscCampaignNote: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const note = await DnDService.createNote(req, 'misc');
+            Response.send(NotesService.getSharableNote(note), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
     static createNPC: RequestHandler = async (req: IRequest, res) => {
         try {
             const npc = await DnDService.createNote(req, 'npc');
@@ -216,6 +225,18 @@ export class DnDController {
             Response.send({
                 ...locations,
                 results: locations.results.map(note => NotesService.getSharableNoteRef(note))
+            }, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getMiscCampaignNotes: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const notes = await DnDService.getNotes(req, 'misc');
+            Response.send({
+                ...notes,
+                results: notes.results.map(note => NotesService.getSharableNoteRef(note))
             }, req, res);
         } catch (err: any) {
             Response.error(err, req, res);

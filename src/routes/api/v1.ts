@@ -117,6 +117,10 @@ router.route(`${DND_ROUTE}/:campaignId/npc`)
     .post(authMiddleware, DnDController.createNPC)
     .get(authMiddleware, DnDController.getNPCs);
 
+router.route(`${DND_ROUTE}/:campaignId/misc`)
+    .post(authMiddleware, DnDController.createMiscCampaignNote)
+    .get(authMiddleware, DnDController.getMiscCampaignNotes);
+
 router.route(`${DND_ROUTE}/:campaignId/party-exp`)
     .patch(authMiddleware, DnDController.updatePartyXP);
 

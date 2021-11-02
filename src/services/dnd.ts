@@ -18,8 +18,8 @@ import { NotesService } from './notes';
 
 dayjs.extend(utc);
 
-type NoteType = 'location' | 'npc' | 'quest' | 'session';
-type NoteIdList = 'locations' | 'npcs' | 'quests' | 'sessions';
+type NoteType = 'location' | 'misc' | 'npc' | 'quest' | 'session';
+type NoteIdList = 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
 
 interface IExpResult {
     exp: number;
@@ -185,13 +185,14 @@ export class DnDService {
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
 
-        const { name } = (req.body as { name: string });
+        const { name, tags = [] } = (req.body as { name: string, tags: string[] });
         
         if (!name) throw new CustomError('a name is required', ERROR.INVALID_ARG);
 
         const _noteReq = { ...req };
         _noteReq.body = {
             name,
+            tags,
             category: `dnd_${type}`,
         }
         const note = await NotesService.createNote(_noteReq as IRequest);
@@ -199,7 +200,7 @@ export class DnDService {
         try {
             await Campaign.updateOne({
                 _id: campaign.id,
-                $push: { [`${type}s`]: note.id }
+                $push: { [`${type}${type === 'misc' ? '' : 's'}`]: note.id }
             });
 
             return note;
@@ -312,6 +313,14 @@ export class DnDService {
         }
 
         if (!campaign) throw asCustomError(new CustomError('campaign not found', ERROR.NOT_FOUND));
+
+        // TODO: delete PCs
+        // TODO: delete all notes
+        // - locations
+        // - npcs
+        // - misc
+        // - quests
+        // - sessions
 
         // delete all this campaign's checklist items
         try {
@@ -505,7 +514,7 @@ export class DnDService {
         const query = {
             $and: [
                 { owner: req.requestor.id },
-                { _id: { $in: campaign[`${type}s` as NoteIdList] } },
+                { _id: { $in: campaign[`${type}${type === 'misc' ? '' : 's' }` as NoteIdList] } },
                 { category: `dnd_${type}` },
                 { markedForDeletion: false },
             ]
@@ -526,6 +535,7 @@ export class DnDService {
         try {
             const results = await Note
                 .find(query)
+                .populate('tags')
                 .skip(_page * _pageSize)
                 .limit(_pageSize)
                 .sort({ _id: 'desc' })

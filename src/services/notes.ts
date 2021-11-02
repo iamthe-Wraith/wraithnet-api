@@ -7,13 +7,16 @@ import CustomError, { asCustomError } from '../utils/custom-error';
 import { ERROR } from '../constants';
 import { ROLE } from '../models/user';
 import { generateSlug } from '../utils';
+import { TagsService } from './tags';
+import { ITag, ITags } from '../models/tag';
 
 dayjs.extend(utc);
 
 export class NotesService {
     static async createNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
-        const { name, text = '', category, access = [] } = (req.body as {
+        const { name, tags = [], text = '', category, access = [] } = (req.body as {
             name: string;
+            tags: string[];
             text?: string;
             category: string;
             access?: string[];
@@ -53,12 +56,28 @@ export class NotesService {
             }
         }
 
+        let _tags: ITags;
+        if (Array.isArray(tags) && tags.length) {
+            const invalidIds = tags.filter(tag => !Types.ObjectId.isValid(tag));
+            if (invalidIds.length) {
+                throw new CustomError(`invalid tag id${invalidIds.length > 1 ? 's' : ''} found: ${invalidIds.join(', ')}`, ERROR.INVALID_ARG);
+            }
+            const request = <IRequest>{
+                requestor: req.requestor,
+                query: {},
+            };
+
+            request.query.ids = tags;
+            _tags = await TagsService.getTags(request);
+        }
+
         const note = new Note({
             owner: req.requestor.id,
             access,
             name,
             category,
             text,
+            tags: _tags?.tags,
             slug: generateSlug(name),
             createdAt: dayjs.utc().format(),
         });
@@ -136,7 +155,9 @@ export class NotesService {
         };
 
         try {
-            const note = await Note.findOne(query);
+            const note = await Note
+                .findOne(query)
+                .populate('tags');
             if (!note) throw new CustomError('note not found', ERROR.NOT_FOUND);
             return note;
         } catch (err) {
@@ -183,6 +204,7 @@ export class NotesService {
         try {
             const results = await Note
                 .find(query)
+                .populate('tags')
                 .skip(_page * _pageSize)
                 .limit(_pageSize)
                 .sort({ name: 'asc' })
@@ -213,6 +235,7 @@ export class NotesService {
             name: note.name,
             category: note.category,
             slug: note.slug,
+            tags: note.tags.map(tag => TagsService.getSharable((tag as ITag))),
         };
 
         if (note.lastModified) noteRef.lastModified = dayjs.utc().toDate();
@@ -221,14 +244,16 @@ export class NotesService {
     }
 
     static async updateNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
-        const { name, text, category, access } = (req.body as {
+        const { name, tags = [], text, category, access } = (req.body as {
             name?: string;
+            tags?: string[];
             text?: string;
             category?: string;
             access?: string[];
         });
 
-        if (!name && !text && !category && !access) throw new CustomError('no updating content found', ERROR.INVALID_ARG);
+        if (!Array.isArray(tags)) throw new CustomError('invalid tags received. must be an array', ERROR.INVALID_ARG);
+        if (!name && !tags.length && !text && !category && !access) throw new CustomError('no updating content found', ERROR.INVALID_ARG);
 
         let note: INote & Document<any, any, INote>;
         try {
@@ -240,6 +265,12 @@ export class NotesService {
         if (name) {
             note.name = name;
             note.slug = generateSlug(name);
+        }
+
+        if (tags.length) {
+            const invalidIds = tags.filter(tag => !Types.ObjectId.isValid(tag));
+            if (invalidIds.length) throw new CustomError(`invalid tag id${invalidIds.length > 1 ? 's' : ''} found: ${invalidIds.join(', ')}`, ERROR.INVALID_ARG);
+            note.tags = [...(note.tags || []).map(t => (t as ITag)?._id || t), ...tags];
         }
 
         if (text) note.text = text;
@@ -289,7 +320,6 @@ export class NotesService {
         }
 
         note.access = access;
-
         note.lastModified = dayjs.utc().toDate();
 
         try {
