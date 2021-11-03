@@ -501,9 +501,13 @@ export class DnDService {
 
     static getNotes = async (req: IRequest, type: NoteType ): Promise<ICollectionResponse<INoteRef>> => {
         const {
+            name,
+            tags,
             page,
             pageSize,
         } = (req.query as {
+            name?: string;
+            tags?: string;
             page: string;
             pageSize: string;
         });
@@ -511,7 +515,7 @@ export class DnDService {
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
 
-        const query = {
+        const query: any = {
             $and: [
                 { owner: req.requestor.id },
                 { _id: { $in: campaign[`${type}${type === 'misc' ? '' : 's' }` as NoteIdList] } },
@@ -519,6 +523,13 @@ export class DnDService {
                 { markedForDeletion: false },
             ]
         };
+
+        if (!!name) query.$and.push({ name: { $regex: name, $options: 'i' } });
+
+        if (!!tags) {
+            if (typeof tags !== 'string') throw new CustomError('invalid tags', ERROR.INVALID_ARG);
+            query.$and.push({ $or: tags.split(',').map(t => ({ tags: t })) });
+        }
 
         let _page = 0;
         if (page) {

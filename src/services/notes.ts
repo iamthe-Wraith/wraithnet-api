@@ -167,10 +167,14 @@ export class NotesService {
 
     static async getNotes (req: IRequest): Promise<ICollectionResponse<INoteRef>> {
         const {
+            name,
+            tags,
             category,
             page,
             pageSize,
         } = (req.query as {
+            name: string;
+            tags: string;
             category: string;
             page: string;
             pageSize: string;
@@ -188,6 +192,13 @@ export class NotesService {
                 ] }
             ]
         };
+
+        if (!!name) query.$and.push({ name: { $regex: name, $options: 'i' } });
+
+        if (!!tags) {
+            if (typeof tags !== 'string') throw new CustomError('invalid tags', ERROR.INVALID_ARG);
+            query.$and.push({ $or: tags.split(',').map(t => ({ tags: t })) });
+        }
 
         let _page = 0;
         if (page) {
