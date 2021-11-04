@@ -75,7 +75,7 @@ export class TagsService {
             page,
             pageSize,
         } = (req.query as {
-            ids: string[];
+            ids: string | string[];
             text: string;
             page: string;
             pageSize: string;
@@ -103,8 +103,9 @@ export class TagsService {
         }
 
         if (ids) {
-            if (!Array.isArray(ids)) throw new CustomError('invalid ids found. must be an array', ERROR.INVALID_ARG);
-            query.$and.push({ _id: { $in: ids } });
+            let _ids: string | string[] = ids;
+            if (typeof _ids === 'string') _ids = _ids.split(',').map(i => i.trim());
+            query.$and.push({ _id: { $in: _ids } });
         }
 
         try {

@@ -14,9 +14,9 @@ dayjs.extend(utc);
 
 export class NotesService {
     static async createNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
-        const { name, tags = [], text = '', category, access = [] } = (req.body as {
+        const { name, tags, text = '', category, access = [] } = (req.body as {
             name: string;
-            tags: string[];
+            tags: string;
             text?: string;
             category: string;
             access?: string[];
@@ -57,11 +57,7 @@ export class NotesService {
         }
 
         let _tags: ITags;
-        if (Array.isArray(tags) && tags.length) {
-            const invalidIds = tags.filter(tag => !Types.ObjectId.isValid(tag));
-            if (invalidIds.length) {
-                throw new CustomError(`invalid tag id${invalidIds.length > 1 ? 's' : ''} found: ${invalidIds.join(', ')}`, ERROR.INVALID_ARG);
-            }
+        if (tags) {
             const request = <IRequest>{
                 requestor: req.requestor,
                 query: {},
@@ -77,7 +73,7 @@ export class NotesService {
             name,
             category,
             text,
-            tags: _tags?.results,
+            tags: (_tags?.results || []),
             slug: generateSlug(name),
             createdAt: dayjs.utc().format(),
         });
@@ -281,7 +277,18 @@ export class NotesService {
         if (tags.length) {
             const invalidIds = tags.filter(tag => !Types.ObjectId.isValid(tag));
             if (invalidIds.length) throw new CustomError(`invalid tag id${invalidIds.length > 1 ? 's' : ''} found: ${invalidIds.join(', ')}`, ERROR.INVALID_ARG);
-            note.tags = [...(note.tags || []).map(t => (t as ITag)?._id || t), ...tags];
+            
+            try {
+                const tagsRequest: any = {
+                    ...req,
+                    query: {},
+                };
+                tagsRequest.query.ids = tags;
+                const _tags = await TagsService.getTags(tagsRequest);
+                note.tags = _tags.results;
+            } catch (err) {
+                throw asCustomError(err);
+            }
         }
 
         if (text) note.text = text;
