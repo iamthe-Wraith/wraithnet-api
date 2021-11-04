@@ -25,7 +25,7 @@ export class TagsService {
         const existingTags = await TagsService.getTags(request);
 
         // tag already exists
-        if (existingTags.count > 0) return existingTags.tags[0];
+        if (existingTags.count > 0) return existingTags.results[0];
 
         try {
             const tag = new Tag({
@@ -116,7 +116,7 @@ export class TagsService {
                 .exec();
         
             return {
-                tags: results,
+                results,
                 count: await Tag.countDocuments(query)
             };
         } catch (err) {

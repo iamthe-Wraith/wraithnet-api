@@ -26,10 +26,10 @@ export class TagsController {
     static get: RequestHandler = async (req: IRequest, res) => {
         try {
             const tags = await TagsService.getTags(req);
-            if ((tags as ITags)?.tags) {
+            if ((tags as ITags)?.results) {
                 const result = {
                     ...tags,
-                    tags: (tags as ITags).tags.map(t => TagsService.getSharable(t)),
+                    results: (tags as ITags).results.map(t => TagsService.getSharable(t)),
                 }
                 Response.send(result, req, res);
             }

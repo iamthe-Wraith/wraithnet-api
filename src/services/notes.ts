@@ -77,7 +77,7 @@ export class NotesService {
             name,
             category,
             text,
-            tags: _tags?.tags,
+            tags: _tags?.results,
             slug: generateSlug(name),
             createdAt: dayjs.utc().format(),
         });
