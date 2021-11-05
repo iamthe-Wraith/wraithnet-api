@@ -7,6 +7,7 @@ import { IUser } from '../user';
 import { ICampaign } from './campaign';
 import { IDnDRace } from './race';
 import { IDnDClass } from './class';
+import { INote, INoteSharableRef } from '../note';
 
 dayjs.extend(utc);
 
@@ -28,16 +29,17 @@ export interface IPCRequest {
     classes: IDnDClass['id'][];
     age: number;
     exp: number;
+    note: string;
 }
 
 export interface IBasePCRef extends IPCRequest, IBaseResource {
     owner: IUser['id'];
     campaignId: ICampaign['id'];
     markedForDeletion?: boolean;
+    note: INote['id'];
 }
 
 export interface IBasePC extends IBasePCRef {
-    note: string;
     // events
     // inventory
     // contacts
@@ -45,6 +47,7 @@ export interface IBasePC extends IBasePCRef {
 
 export interface IPC extends IBasePC {
     _id: string;
+    note: INoteSharableRef;
 }
 
 export interface IPCRef extends IBasePCRef {
@@ -55,6 +58,7 @@ export interface IPCSharable extends IBasePC {
     id: string;
     expForNextLevel: number;
     level: number;
+    note: INoteSharableRef;
 }
 
 export interface IPCSharableRef extends IBasePCRef {

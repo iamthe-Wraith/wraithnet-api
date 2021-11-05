@@ -242,7 +242,7 @@ export class NotesService {
             name: note.name,
             category: note.category,
             slug: note.slug,
-            tags: note.tags.map(tag => TagsService.getSharable((tag as ITag))),
+            tags: (note.tags || []).map(tag => TagsService.getSharable((tag as ITag))),
         };
 
         if (note.lastModified) noteRef.lastModified = dayjs.utc().toDate();
@@ -260,7 +260,7 @@ export class NotesService {
         });
 
         if (!Array.isArray(tags)) throw new CustomError('invalid tags received. must be an array', ERROR.INVALID_ARG);
-        if (!name && !tags.length && !text && !category && !access) throw new CustomError('no updating content found', ERROR.INVALID_ARG);
+        if (!name && !tags.length && typeof text !== 'string' && !category && !access) throw new CustomError('no updatable content found', ERROR.INVALID_ARG);
 
         let note: INote & Document<any, any, INote>;
         try {

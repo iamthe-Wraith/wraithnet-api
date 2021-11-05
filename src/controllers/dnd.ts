@@ -267,7 +267,7 @@ export class DnDController {
     static getPCs: RequestHandler = async (req: IRequest, res) => {
         try {
             const pcs = await DnDService.getPCs(req);
-            Response.send(pcs.map(pc => DnDService.getSharablePCRef(pc)), req, res);
+            Response.send(pcs.map(pc => DnDService.getSharablePC(pc)), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
@@ -350,7 +350,7 @@ export class DnDController {
             const pcsExp = await DnDService.updatePartyXP(req);
             Response.send(pcsExp.map(x => {
                 return {
-                    pc: DnDService.getSharablePCRef(x.pc),
+                    pc: DnDService.getSharablePC(x.pc),
                     exp: x.exp,
                 }
             }), req, res);
@@ -362,7 +362,7 @@ export class DnDController {
     static updatePC: RequestHandler = async (req: IRequest, res) => {
         try {
             const pc = await DnDService.updatePC(req);
-            Response.send(DnDService.getSharablePCRef(pc), req, res);
+            Response.send(DnDService.getSharablePC(pc), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

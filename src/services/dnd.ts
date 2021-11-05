@@ -18,7 +18,7 @@ import { NotesService } from './notes';
 
 dayjs.extend(utc);
 
-type NoteType = 'location' | 'misc' | 'npc' | 'quest' | 'session';
+type NoteType = 'location' | 'misc' | 'npc' | 'pc' | 'quest' | 'session';
 type NoteIdList = 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
 
 interface IExpResult {
@@ -51,13 +51,16 @@ const getLevel = (exp: number) => {
 
     for (let i = 0; i < dndExp.length; i++) {
         if (dndExp[i].threshold <= exp) {
-            const nextLevel = dndExp[i + 1];
-            if (nextLevel) {
-                if (nextLevel.threshold > exp) level = nextLevel.level;
-            } else {
+            if (i >= dndExp.length) {
                 // is already at the highest level
                 level = dndExp[i].level;
+                break;
             }
+            
+            if (dndExp[i + 1].threshold > exp) {
+                level = dndExp[i].level;
+                break;
+            };
         }
     }
 
@@ -185,14 +188,15 @@ export class DnDService {
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
 
-        const { name, tags = [] } = (req.body as { name: string, tags: string[] });
-        
+        const { name, tags = [], text = '' } = (req.body as { name: string, tags: string[], text: string });
+
         if (!name) throw new CustomError('a name is required', ERROR.INVALID_ARG);
 
         const _noteReq = { ...req };
         _noteReq.body = {
             name,
             tags,
+            text,
             category: `dnd_${type}`,
         }
         const note = await NotesService.createNote(_noteReq as IRequest);
@@ -240,19 +244,24 @@ export class DnDService {
         }
 
         try {
-            const validClasses: IDnDClass[] = [];
-            const invalidClasses: IDnDClass[] = [];
             const allClasses = await DnDService.getClasses(req);
-            allClasses.forEach(c => {
-                const found = classes.find(cc => `${c._id}` === cc);
-                if (found) {
-                    validClasses.push(c);
-                } else {
-                    invalidClasses.push(c);
-                }
+            const validClasses = classes.filter(c => {
+                return !!allClasses.find(cc => `${cc._id}` === c);
             });
-            if (invalidClasses.length !== 0) throw new CustomError('only valid class ids allowed', ERROR.INVALID_ARG);
+            if (validClasses.length !== classes.length) throw new CustomError('only valid class ids allowed', ERROR.INVALID_ARG);
             _classes = validClasses;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        let _note: INote;
+        try {
+            // create an empty note and assign it to pc
+            // no content to be set here...note will be updated
+            // independently, like all other notes.
+            const noteRequest = { ...req };
+            noteRequest.body = { name };
+            _note = await DnDService.createNote(noteRequest as IRequest, 'pc');
         } catch (err) {
             throw asCustomError(err);
         }
@@ -262,8 +271,9 @@ export class DnDService {
                 owner: req.requestor.id,
                 campaignId,
                 name,
+                note: _note,
                 race: _race,
-                classes,
+                classes: _classes,
                 age,
                 exp: 0,
             });
@@ -271,8 +281,15 @@ export class DnDService {
             if (typeof exp === 'number') pc.exp = exp;
     
             try {
-                await pc.save();
-                return pc;
+                const savedPc = await pc.save();
+                const pcRequest = { ...req };
+                pcRequest.params = {
+                    campaignId,
+                    id: savedPc._id,
+                };
+
+                // retrieve pc resource to populate all fields
+                return await DnDService.getPC(pcRequest as IRequest);
             } catch (err) {
                 throw asCustomError(err);
             }
@@ -407,7 +424,6 @@ export class DnDService {
 
         try {
             pc = await PC.findOne(query);
-
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
         } catch (err) {
             throw asCustomError(err);
@@ -415,6 +431,8 @@ export class DnDService {
 
         if (pc) {
             pc.markedForDeletion = true;
+
+            // TODO: mark note as deleted
 
             try {
                 await pc.save();
@@ -563,7 +581,6 @@ export class DnDService {
 
     static async getPC (req: IRequest): Promise<IPC & Document<any, any, IPC>> {
         const { campaignId, id } = req.params;
-
         const query = {
             _id: id,
             campaignId,
@@ -578,7 +595,6 @@ export class DnDService {
                 .populate('race');
 
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
-
             return pc;
         } catch (err) {
             throw asCustomError(err);
@@ -599,8 +615,11 @@ export class DnDService {
                 .find(query)
                 .populate('classes')
                 .populate('race')
+                .populate('note')
                 .sort({ name: 1 });
         } catch (err) {
+            console.log('>>>>> error');
+            console.log(err);
             throw asCustomError(err);
         }
     }
@@ -655,25 +674,25 @@ export class DnDService {
         return checklist.map(item => DnDService.getSharableItem(item));
     }
 
-    static getSharablePC = (pc: IPC): IPCSharable => {
-        return {
-            ...DnDService.getSharablePCRef(pc),
-            note: pc.note,
-        };
-    }
+    static getSharablePC = (pc: IPCRef): IPCSharableRef => {
+        console.log('pc: ', pc);
 
-    static getSharablePCRef = (pc: IPCRef): IPCSharableRef => {
-        return {
-            id: pc._id,
-            owner: pc.owner,
-            campaignId: pc.campaignId,
-            name: pc.name,
-            race: DnDService.getSharableRace(pc.race),
-            classes: pc.classes.map(c => DnDService.getSharableClass(c)),
-            age: pc.age,
-            exp: pc.exp,
-            expForNextLevel: getExpForNextLevel(pc.exp),
-            level: getLevel(pc.exp),
+        try {
+            return {
+                id: pc._id,
+                owner: pc.owner,
+                campaignId: pc.campaignId,
+                name: pc.name,
+                note: NotesService.getSharableNoteRef(pc.note),
+                race: DnDService.getSharableRace(pc.race),
+                classes: (pc.classes || []).map(c => DnDService.getSharableClass(c)),
+                age: pc.age,
+                exp: pc.exp,
+                expForNextLevel: getExpForNextLevel(pc.exp),
+                level: getLevel(pc.exp),
+            }
+        } catch (err) {
+            throw asCustomError(err);
         }
     }
 
@@ -849,7 +868,11 @@ export class DnDService {
         let pc: IPC & Document<any, any, IPC>;
 
         try {
-            pc = await PC.findOne(query);
+            pc = await PC
+                .findOne(query)
+                .populate('classes')
+                .populate('race')
+                .populate('note');
 
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
         } catch (err) {
@@ -864,7 +887,12 @@ export class DnDService {
 
             try {
                 await pc.save();
-                return pc;
+                const pcRequest = { ...req };
+                pcRequest.params = {
+                    campaignId,
+                    id: pc._id,
+                };
+                return DnDService.getPC(pcRequest as IRequest);
             } catch (err) {
                 throw asCustomError(err);
             }
