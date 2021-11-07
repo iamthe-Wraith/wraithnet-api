@@ -18,8 +18,8 @@ import { NotesService } from './notes';
 
 dayjs.extend(utc);
 
-type NoteType = 'location' | 'misc' | 'npc' | 'pc' | 'quest' | 'session';
-type NoteIdList = 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
+type NoteType = 'item' | 'location' | 'misc' | 'npc' | 'pc' | 'quest' | 'session';
+type NoteIdList = 'items' | 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
 
 interface IExpResult {
     exp: number;
@@ -618,8 +618,6 @@ export class DnDService {
                 .populate('note')
                 .sort({ name: 1 });
         } catch (err) {
-            console.log('>>>>> error');
-            console.log(err);
             throw asCustomError(err);
         }
     }
@@ -675,8 +673,6 @@ export class DnDService {
     }
 
     static getSharablePC = (pc: IPCRef): IPCSharableRef => {
-        console.log('pc: ', pc);
-
         try {
             return {
                 id: pc._id,

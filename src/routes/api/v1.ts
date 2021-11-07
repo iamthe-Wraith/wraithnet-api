@@ -109,6 +109,10 @@ router.route(`${DND_ROUTE}/:campaignId/daily-checklist/:id?`)
     .patch(authMiddleware, DnDController.updateChecklistItem)
     .delete(authMiddleware, DnDController.deleteChecklistItem);
 
+router.route(`${DND_ROUTE}/:campaignId/item`)
+    .post(authMiddleware, DnDController.createItem)
+    .get(authMiddleware, DnDController.getItems);
+
 router.route(`${DND_ROUTE}/:campaignId/location`)
     .post(authMiddleware, DnDController.createLocation)
     .get(authMiddleware, DnDController.getLocations);

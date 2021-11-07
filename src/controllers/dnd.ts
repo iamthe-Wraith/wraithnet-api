@@ -37,6 +37,15 @@ export class DnDController {
         }
     }
 
+    static createItem: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const item = await DnDService.createNote(req, 'item');
+            Response.send(NotesService.getSharableNote(item), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }  
+
     static createMiscNote: RequestHandler = async (req: IRequest, res) => {
         try {
             req.body.category = ReservedNoteCategory.DND_MISC;
@@ -187,6 +196,18 @@ export class DnDController {
         try {            
             const classes = await DnDService.getClasses(req);
             Response.send(classes.map(c => DnDService.getSharableClass(c)), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getItems: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const items = await DnDService.getNotes(req, 'item');
+            Response.send({
+                ...items,
+                results: items.results.map(item => NotesService.getSharableNoteRef(item))
+            }, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
