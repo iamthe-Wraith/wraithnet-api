@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import { IBaseResource } from '../../types';
@@ -12,6 +12,7 @@ export interface ICampaignRequest {
     name: string;
     startDate: string;
     currentDate: string;
+    firstSessionDate: Date;
 }
 
 export interface IBaseCampaign extends ICampaignRequest, IBaseResource {
@@ -43,6 +44,9 @@ const CampaignSchema = new mongoose.Schema({
     },
     currentDate: {
         type: String,
+    },
+    firstSessionDate: {
+        type: Date,
     },
     items: [{
         type: Schema.Types.ObjectId,

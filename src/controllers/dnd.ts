@@ -5,7 +5,6 @@ import { Response } from '../utils/response';
 import { DnDService } from '../services/dnd';
 import { IRequest } from '../types';
 import { dndExp } from '../../static/dnd-exp';
-import { NotesController } from './notes';
 import { NotesService } from '../services/notes';
 import { ReservedNoteCategory } from '../models/note';
 
@@ -322,6 +321,15 @@ export class DnDController {
                 ...sessions,
                 results: sessions.results.map(note => NotesService.getSharableNoteRef(note))
             }, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static getStats: RequestHandler = async (req: IRequest, res) => {
+        try {            
+            const stats = await DnDService.getStats(req);
+            Response.send(stats, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

@@ -1,5 +1,5 @@
 import { Document } from 'mongoose';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import { ERROR } from "../constants";
@@ -20,6 +20,18 @@ dayjs.extend(utc);
 
 type NoteType = 'item' | 'location' | 'misc' | 'npc' | 'pc' | 'quest' | 'session';
 type NoteIdList = 'items' | 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
+
+interface ICampaignStats {
+    sessions?: number;
+    npcs?: number;
+    locations?: number;
+    quests?: number;
+    items?: number;
+    pcs?: number;
+    daysElapsed?: number;
+    inGameDaysElapsed?: number;
+    lastSession?: string;
+}
 
 interface IExpResult {
     exp: number;
@@ -134,9 +146,9 @@ export class DnDService {
     }
 
     static async createCampaign (req: IRequest): Promise<ICampaign> {
-        const { name, startDate } = req.body;
+        const { name, startDate, firstSessionDate } = req.body;
 
-        if (!name) throw asCustomError(new CustomError('a name is required', ERROR.INVALID_ARG));
+        if (!name) throw new CustomError('a name is required', ERROR.INVALID_ARG);
         
         let dndDate = new DnDDate();
 
@@ -144,7 +156,17 @@ export class DnDService {
             try {
                 dndDate = new DnDDate(startDate);
             } catch (err) {
-                throw asCustomError(new CustomError('invalid start date', ERROR.INVALID_ARG));
+                throw new CustomError('invalid start date', ERROR.INVALID_ARG);
+            }
+        }
+
+        let _firstSessionDate: Date;
+        if (firstSessionDate) {
+            const _fsd = dayjs(firstSessionDate);
+            if (_fsd.isValid()) {
+                _firstSessionDate = _fsd.toDate();
+            } else {
+                throw new CustomError('invalid first session date', ERROR.INVALID_ARG);
             }
         }
 
@@ -154,6 +176,7 @@ export class DnDService {
                 startDate: dndDate.stringify(),
                 currentDate: dndDate.stringify(),
                 createdAt: dayjs.utc().format(),
+                firstSessionDate: _firstSessionDate,
                 owner: req.requestor.id,
             });
 
@@ -641,6 +664,7 @@ export class DnDService {
             name: campaign.name,
             startDate: campaign.startDate,
             currentDate: campaign.startDate,
+            firstSessionDate: campaign.firstSessionDate,
         };
 
         return sharable;
@@ -699,33 +723,119 @@ export class DnDService {
         };
     }
 
-    static async updateCampaign (req: IRequest): Promise<ICampaign> {
-        const { name } = (req.body as ICampaignRequest);
+    static getStats = async (req: IRequest) => {
         const { campaignId } = req.params;
+        const campaign = await DnDService.getCampaign(req);
 
-        if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
-        if (!name) throw asCustomError(new CustomError('no updatable content found', ERROR.INVALID_ARG));
-        if (!!name && typeof name !== 'string') throw asCustomError(new CustomError('invalid name', ERROR.INVALID_ARG));
+        // number of days (in game) that have ellapsed in game
+        // last session date
 
-        let campaign: ICampaign & Document<any, any>;
+        const baseAndQuery = [
+            { owner: req.requestor.id },
+            { markedForDeletion: false },
+        ]
+
+        const stats: ICampaignStats = {};
+
+        if (campaign.firstSessionDate) {
+            stats.daysElapsed = dayjs().diff(dayjs(campaign.firstSessionDate), 'day');
+        }
 
         try {
-            campaign = await Campaign.findOne({
-                owner: req.requestor.id,
-                _id: campaignId,
-                markedForDeletion: false, 
-            });
-        } catch (err: any) {
+            const query: any = { $and: [ ...baseAndQuery ] };
+            query.$and.push({ _id: { $in: campaign.sessions } });
+            query.$and.push({ category: 'dnd_session' });
+            stats.sessions = await Note.countDocuments(query);
+        } catch (err) {
             throw asCustomError(err);
         }
 
-        if (!campaign) throw asCustomError(new CustomError('campaign not found', ERROR.NOT_FOUND));
-        campaign.name = name;
+        try {
+            const query: any = { $and: [ ...baseAndQuery ] };
+            query.$and.push({ _id: { $in: campaign.npcs } });
+            query.$and.push({ category: 'dnd_npc' });
+            stats.npcs = await Note.countDocuments(query);
+        } catch (err) {
+            throw asCustomError(err);
+        }
 
         try {
-            await campaign.save();
-            return campaign;
+            const query: any = { $and: [ ...baseAndQuery ] };
+            query.$and.push({ _id: { $in: campaign.locations } });
+            query.$and.push({ category: 'dnd_location' });
+            stats.locations = await Note.countDocuments(query);
         } catch (err) {
+            throw asCustomError(err);
+        }
+
+        try {
+            const query: any = { $and: [ ...baseAndQuery ] };
+            query.$and.push({ _id: { $in: campaign.quests } });
+            query.$and.push({ category: 'dnd_quest' });
+            stats.quests = await Note.countDocuments(query);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        try {
+            const query: any = { $and: [ ...baseAndQuery ] };
+            query.$and.push({ _id: { $in: campaign.items } });
+            query.$and.push({ category: 'dnd_item' });
+            stats.items = await Note.countDocuments(query);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        try {
+            const query = {
+                campaignId,
+                owner: req.requestor.id,
+                markedForDeletion: false,
+            };
+            stats.pcs = await PC.countDocuments(query);
+        } catch (err) {
+            throw asCustomError(err);
+        }
+
+        return stats;
+    }
+
+    static async updateCampaign (req: IRequest): Promise<ICampaign> {
+        const { name, firstSessionDate } = (req.body as ICampaignRequest);
+        const { campaignId } = req.params;
+        let _firstSessionDate: Dayjs;
+
+        if (!campaignId) throw new CustomError('no campaign id found', ERROR.INVALID_ARG);
+        if (!name && !firstSessionDate) throw new CustomError('no updatable content found', ERROR.INVALID_ARG);
+        if (!!name && typeof name !== 'string') throw new CustomError('invalid name', ERROR.INVALID_ARG);
+        if (!!firstSessionDate) {
+            const _fsd = dayjs(firstSessionDate);
+            if (_fsd.isValid()) {
+                _firstSessionDate = _fsd.clone();
+            } else {
+                throw new CustomError('invalid first session date', ERROR.INVALID_ARG);
+            }
+        }
+
+        try {
+            const result = await Campaign.updateOne({
+                owner: req.requestor.id,
+                _id: campaignId,
+                markedForDeletion: false, 
+            },
+            {
+                name: !!name ? name : null,
+                firstSessionDate: !!_firstSessionDate ? _firstSessionDate.toDate() : null,
+            });
+
+            if (result.nModified === 1) {
+                return await DnDService.getCampaign(req);
+            } else if (result.n === 0) {
+                throw new CustomError('campaign not found', ERROR.NOT_FOUND);
+            } else {
+                throw new CustomError('an error occurred updating the campaign', ERROR.GEN);
+            }
+        } catch (err: any) {
             throw asCustomError(err);
         }
     }
