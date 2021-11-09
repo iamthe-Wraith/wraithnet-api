@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
@@ -13,9 +13,7 @@ export interface IBaseTag extends IBaseResource {
     markedForDeletion?: boolean;
 }
 
-export interface ITag extends IBaseTag {
-    _id: string;
-}
+export interface ITag extends IBaseTag, Document<string> {}
 
 export interface ITagSharable extends IBaseTag {
     id: string;
@@ -23,7 +21,7 @@ export interface ITagSharable extends IBaseTag {
 
 export interface ITags {
     count: number;
-    tags: ITag[];
+    results: ITag[];
 }
 
 const TagSchema = new mongoose.Schema({

@@ -45,31 +45,20 @@ export class UserLogService {
     }
 
     static async createTagsForEntry (tags: string[], requestor: IUser): Promise<ITag[]> {
+        const request = <IRequest>{
+            body: {},
+            query: {},
+            params: {},
+            requestor: requestor,
+        };
+        
         const _tags = tags.map(async (t) => {
-            const request = <IRequest>{
-                body: {},
-                query: {},
-                params: {},
-                requestor: requestor,
-            };
-
             request.query.text = t;
             request.body.text = t;
-
-            const existingTag = await TagsService.get(request);
-
-            if (existingTag) {
-                if (Array.isArray((existingTag as ITags)?.tags) &&
-                    (existingTag as ITags).tags.length &&
-                    (existingTag as ITags).tags.filter(existingTag => existingTag.text === t).length) {
-                    return (existingTag as ITags).tags[0];
-                }
-            }
-
-            return await TagsService.create(request);
+            return TagsService.create(request)
         });
 
-        return await Promise.all(_tags);
+        return Promise.all(_tags);
     }
 
     static async get (req: IRequest, returnFullObject = false): Promise<IUserLogEntry | IUserLogEntries> {
