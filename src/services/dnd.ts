@@ -9,7 +9,7 @@ import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
 import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
 import { DnDDate } from '../utils/dndDate';
-import { IPC, IPCRef, IPCRequest, IPCSharable, IPCSharableRef, PC } from '../models/dnd/pc';
+import { IPC, IPCRef, IPCRequest, IPCSharableRef, PC } from '../models/dnd/pc';
 import { dndExp } from '../../static/dnd-exp';
 import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
 import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
@@ -142,6 +142,32 @@ export class DnDService {
             return item;
         } catch (err) {
             throw asCustomError(err);      
+        }
+    }
+
+    static async addPCInventoryItems (req: IRequest): Promise<INoteRef[]> {
+        try {
+            const pc = await DnDService.getPC(req);
+            if (!pc) return;
+
+            const { items } = req.body;
+            if (!items) throw new CustomError('no items found', ERROR.INVALID_ARG);
+            if (!Array.isArray(items)) throw new CustomError('invalid items found', ERROR.INVALID_ARG);
+
+            // only add items that are not already in the pc's inventory
+            const _newItems = items.filter(item => !(pc.inventory || []).find(i => `${i}` === `${item}`));
+
+            if (_newItems.length !== items.length) {
+                throw new CustomError('duplicate items in a pc\'s inventory are not allowed');
+            }
+
+            const _items = await NotesService.getNotesById(req, _newItems);
+            
+            pc.inventory = [...(pc.inventory || []), ..._items];
+            await pc.save();
+            return _items;
+        } catch (err) {
+            throw asCustomError(err);
         }
     }
 
@@ -622,7 +648,28 @@ export class DnDService {
         } catch (err) {
             throw asCustomError(err);
         }
-    }    
+    }
+
+    static async getPCInventory (req: IRequest) {
+        const { campaignId, id } = req.params;
+        const query = {
+            _id: id,
+            campaignId,
+            owner: req.requestor.id,
+            markedForDeletion: false,
+        }
+
+        try {
+            const pc = await PC
+                .findOne(query)
+                .populate('inventory');
+
+            if (!pc) throw new CustomError('inventory not found', ERROR.NOT_FOUND);
+            return pc.inventory;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
 
     static async getPCs (req: IRequest): Promise<(IPC & Document<any, any, IPC>)[]> {
         const { campaignId } = req.params;
@@ -798,6 +845,24 @@ export class DnDService {
         }
 
         return stats;
+    }
+
+    static async removePCInventoryItems (req: IRequest): Promise<INoteRef[]> {
+        try {
+            const pc = await DnDService.getPC(req);
+            if (!pc) return;
+
+            const { items } = req.body;
+            if (!items) throw new CustomError('no items found', ERROR.INVALID_ARG);
+            if (!Array.isArray(items)) throw new CustomError('invalid items found', ERROR.INVALID_ARG);
+
+            const _itemsLeft = pc.inventory.filter(item => !items.find(i => `${i}` === `${item}`));
+            
+            pc.inventory = _itemsLeft;
+            await pc.save();
+        } catch (err) {
+            throw asCustomError(err);
+        }
     }
 
     static async updateCampaign (req: IRequest): Promise<ICampaign> {

@@ -226,6 +226,31 @@ export class NotesService {
         }
     }
 
+    static async getNotesById (req: IRequest, ids: string[]) {
+        const query: any = {
+            $and: [
+                { markedForDeletion: false },
+                { _id: { $in: ids } },
+                { $or: [
+                    { owner: req.requestor.id },
+                    { access: { $in: [req.requestor.id, 'all'] } }
+                ] }
+            ]
+        };
+
+        try {
+            const notes = await Note
+                .find(query)
+                .populate('tags')
+                .sort({ name: 'asc' })
+                .exec();
+
+            return notes;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
     static getSharableNote (note: INote) {
         return {
             ...NotesService.getSharableNoteRef(note),

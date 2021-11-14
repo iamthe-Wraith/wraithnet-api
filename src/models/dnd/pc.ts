@@ -37,11 +37,11 @@ export interface IBasePCRef extends IPCRequest, IBaseResource {
     campaignId: ICampaign['id'];
     markedForDeletion?: boolean;
     note: INote['id'];
+    inventory?: INote['id'][];
 }
 
 export interface IBasePC extends IBasePCRef {
     // events
-    // inventory
     // contacts
 }
 
@@ -91,6 +91,10 @@ const PCSchema = new mongoose.Schema({
         required: true,
         default: 0,
     },
+    inventory: [{
+        type: Schema.Types.ObjectId,
+        ref: 'note'
+    }],
     note: {
         type: Schema.Types.ObjectId,
         ref: 'note'
