@@ -18,15 +18,6 @@ export class DnDController {
         }
     }
 
-    static addPCInventoryItems: RequestHandler = async (req: IRequest, res) => {
-        try {
-            const items = await DnDService.addPCInventoryItems(req);
-            Response.send(items.map(item => NotesService.getSharableNoteRef(item)), req, res);
-        } catch (err: any) {
-            Response.error(err, req, res);
-        }
-    }
-
     static createClass: RequestHandler = async (req: IRequest, res) => {
         try {
             const c = await DnDService.createClass(req);
@@ -353,15 +344,6 @@ export class DnDController {
         }
     }
 
-    static removePCInventoryItems: RequestHandler = async (req: IRequest, res) => {
-        try {            
-            await DnDService.removePCInventoryItems(req);
-            Response.send(null, req, res);
-        } catch (err: any) {
-            Response.error(err, req, res);
-        }
-    }
-
     static updateCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
             const campaign = await DnDService.updateCampaign(req);
@@ -428,6 +410,15 @@ export class DnDController {
         try {
             const result = await DnDService.updatePCExp(req);
             Response.send(result, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
+    static updatePCInventoryItems: RequestHandler = async (req: IRequest, res) => {
+        try {
+            const items = await DnDService.updatePCInventoryItems(req);
+            Response.send(items.map(item => NotesService.getSharableNoteRef(item)), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

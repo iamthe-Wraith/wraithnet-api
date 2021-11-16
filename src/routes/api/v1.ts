@@ -133,9 +133,8 @@ router.route(`${DND_ROUTE}/:campaignId/pc`)
     .get(authMiddleware, DnDController.getPCs);
 
 router.route(`${DND_ROUTE}/:campaignId/pc/:id/inventory`)
-    .post(authMiddleware, DnDController.addPCInventoryItems)
-    .get(authMiddleware, DnDController.getPCInventory)
-    .delete(authMiddleware, DnDController.removePCInventoryItems);
+    .put(authMiddleware, DnDController.updatePCInventoryItems)
+    .get(authMiddleware, DnDController.getPCInventory);
 
 router.route(`${DND_ROUTE}/:campaignId/pc/:id/exp`)
     .patch(authMiddleware, DnDController.updatePCExp)
