@@ -636,7 +636,10 @@ export class DnDService {
         try {
             const pc = await PC
                 .findOne(query)
-                .populate('inventory');
+                .populate({
+                    path: 'inventory',
+                    populate: 'tags',
+                });
 
             if (!pc) throw new CustomError('inventory not found', ERROR.NOT_FOUND);
             return pc.inventory;
