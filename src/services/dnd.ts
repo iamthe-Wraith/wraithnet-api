@@ -479,7 +479,7 @@ export class DnDService {
         }
     }
 
-    static async getCampaign (req: IRequest): Promise<ICampaign & Document<any, any, IPC>> {
+    static async getCampaign (req: IRequest): Promise<ICampaign & Document<any, any>> {
         const { campaignId } = req.params;
 
         if (!campaignId) throw new CustomError('no campaignId found', ERROR.INVALID_ARG);
@@ -602,7 +602,7 @@ export class DnDService {
         }
     }
 
-    static async getPC (req: IRequest): Promise<IPC & Document<any, any, IPC>> {
+    static async getPC (req: IRequest): Promise<IPC & Document<any, any>> {
         const { campaignId, id } = req.params;
         const query = {
             _id: id,
@@ -648,7 +648,7 @@ export class DnDService {
         }
     }
 
-    static async getPCs (req: IRequest): Promise<(IPC & Document<any, any, IPC>)[]> {
+    static async getPCs (req: IRequest): Promise<(IPC & Document<any, any>)[]> {
         const { campaignId } = req.params;
 
         const query = {
@@ -909,7 +909,7 @@ export class DnDService {
         if (!classId) throw new CustomError('resource not found', ERROR.INVALID_ARG);
         if (!name) throw new CustomError('no updatable content found', ERROR.INVALID_ARG);
 
-        let _class: IDnDClass & Document<any, any, IDnDClass>;
+        let _class: IDnDClass & Document<any, any>;
 
         try {
             _class = await DnDClass.findOne({ _id: classId });
@@ -939,7 +939,7 @@ export class DnDService {
 
         const xp = parseExp(exp);
 
-        let pcs: (IPC & Document<any, any, IPC>)[];
+        let pcs: (IPC & Document<any, any>)[];
         try {
             pcs = await DnDService.getPCs(req);
         } catch (err) {
@@ -995,7 +995,7 @@ export class DnDService {
             markedForDeletion: false,
         };
 
-        let pc: IPC & Document<any, any, IPC>;
+        let pc: IPC & Document<any, any>;
 
         try {
             pc = await PC
@@ -1039,7 +1039,7 @@ export class DnDService {
 
         const xp = parseExp(exp);
 
-        let pc: IPC & Document<any, any, IPC>;
+        let pc: IPC & Document<any, any>;
         try {
             pc = await DnDService.getPC(req);
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
@@ -1093,7 +1093,7 @@ export class DnDService {
         if (!raceId) throw new CustomError('resource not found', ERROR.INVALID_ARG);
         if (!name) throw new CustomError('no updatable content found', ERROR.INVALID_ARG);
 
-        let race: IDnDRace & Document<any, any, IDnDRace>;
+        let race: IDnDRace & Document<any, any>;
 
         try {
             race = await DnDRace.findOne({ _id: raceId });
