@@ -24,7 +24,7 @@ export const authMiddleware:RequestHandler = async (req:IRequest, res, next) => 
       req.requestor = results.users[0];
 
       next();
-    } catch (err) {
+    } catch (err: any) {
       let error:CustomError;
 
       if (err.isCustomError) {

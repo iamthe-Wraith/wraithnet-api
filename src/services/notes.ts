@@ -13,7 +13,7 @@ import { ITag, ITags } from '../models/tag';
 dayjs.extend(utc);
 
 export class NotesService {
-    static async createNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
+    static async createNote (req: IRequest): Promise<INote & Document<any, any>> {
         const { name, tags, text = '', category, access = [] } = (req.body as {
             name: string;
             tags: string;
@@ -38,7 +38,7 @@ export class NotesService {
         // ensure that access is an array and that only contains
         // `all` (admins only) or value user ids
         if (Array.isArray(access)) {
-            const invalidAccess = access.filter(a => a !== 'all' && !Types.ObjectId.isValid(a));
+            const invalidAccess = access.filter(a => a !== 'all' && !(Types.ObjectId as any).isValid(a));
             if (invalidAccess.length) throw new CustomError(`invalid access id${invalidAccess.length ? 's' : ''} found: ${invalidAccess.join(', ')}`);
         } else {
             throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG)
@@ -87,7 +87,7 @@ export class NotesService {
     }
 
     static async deleteNote (req: IRequest): Promise<void> {
-        let note: INote & Document<any, any, INote>;
+        let note: INote & Document<any, any>;
         try {
             note = await NotesService.getNoteById(req);
         } catch (err) {
@@ -108,7 +108,7 @@ export class NotesService {
         }
     }
 
-    static async getNoteById (req: IRequest): Promise<INote & Document<any, any, INote>> {
+    static async getNoteById (req: IRequest): Promise<INote & Document<any, any>> {
         const { id } = req.params;
         if (!id) throw new CustomError('a note id is required', ERROR.INVALID_ARG);
 
@@ -126,7 +126,7 @@ export class NotesService {
      * @param req {IRequest}
      * @returns INote & Document<any, any, INote>
      */
-    static async getNoteBySlug (req: IRequest): Promise<INote & Document<any, any, INote>> {
+    static async getNoteBySlug (req: IRequest): Promise<INote & Document<any, any>> {
         const { category, slug } = req.params;
         if (!category) throw new CustomError('a category is required', ERROR.INVALID_ARG);
         if (!slug) throw new CustomError('a slug is required', ERROR.INVALID_ARG);
@@ -138,7 +138,7 @@ export class NotesService {
         }
     }
 
-    static async getNote (req: IRequest, q: { [key: string]: any }[] = []): Promise<INote & Document<any, any, INote>> {
+    static async getNote (req: IRequest, q: { [key: string]: any }[] = []): Promise<INote & Document<any, any>> {
         const query: any = {
             $and: [
                 ...q,
@@ -275,7 +275,7 @@ export class NotesService {
         return noteRef;
     }
 
-    static async updateNote (req: IRequest): Promise<INote & Document<any, any, INote>> {
+    static async updateNote (req: IRequest): Promise<INote & Document<any, any>> {
         const { name, tags = [], text, category, access } = (req.body as {
             name?: string;
             tags?: string[];
@@ -287,7 +287,7 @@ export class NotesService {
         if (!Array.isArray(tags)) throw new CustomError('invalid tags received. must be an array', ERROR.INVALID_ARG);
         if (!name && !tags.length && typeof text !== 'string' && !category && !access) throw new CustomError('no updatable content found', ERROR.INVALID_ARG);
 
-        let note: INote & Document<any, any, INote>;
+        let note: INote & Document<any, any>;
         try {
             note = await NotesService.getNoteById(req);
         } catch (err) {
@@ -300,7 +300,7 @@ export class NotesService {
         }
 
         if (tags.length) {
-            const invalidIds = tags.filter(tag => !Types.ObjectId.isValid(tag));
+            const invalidIds = tags.filter(tag => !(Types.ObjectId as any).isValid(tag));
             if (invalidIds.length) throw new CustomError(`invalid tag id${invalidIds.length > 1 ? 's' : ''} found: ${invalidIds.join(', ')}`, ERROR.INVALID_ARG);
             
             try {
@@ -337,7 +337,7 @@ export class NotesService {
             // ensure that access is an array and that only contains
             // `all` (admins only) or value user ids
             if (Array.isArray(access)) {
-                const invalidAccess = access.filter(a => a !== 'all' && !Types.ObjectId.isValid(a));
+                const invalidAccess = access.filter(a => a !== 'all' && !(Types.ObjectId as any).isValid(a));
                 if (invalidAccess.length) throw new CustomError(`invalid access id${invalidAccess.length ? 's' : ''} found: ${invalidAccess.join(', ')}`);
             } else {
                 throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG)

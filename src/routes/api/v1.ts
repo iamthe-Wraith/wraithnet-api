@@ -1,8 +1,9 @@
 import { Router } from 'express';
+import multer from 'multer';
 
 import { authMiddleware } from '../../middleware/auth'; 
 import { UsersController } from '../../controllers/users';
-import { AUTHORIZATION_HEADER, DND_ROUTE, ERROR, NOTES_ROUTE, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
+import { AUTHORIZATION_HEADER, DND_ROUTE, ERROR, IMAGE_ROUTE, NOTES_ROUTE, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, UPLOAD_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
 import CustomError from '../../utils/custom-error';
 import { Response } from '../../utils/response';
 import { UserLogController } from '../../controllers/user-log';
@@ -10,8 +11,7 @@ import { TagsController } from '../../controllers/tags';
 import { TestController } from '../../controllers/test';
 import { DnDController } from '../../controllers/dnd';
 import { NotesController } from '../../controllers/notes';
-import { NotesService } from '../../services/notes';
-import { DnDService } from '../../services/dnd';
+import { ImageController } from '../../controllers/image';
 
 const router = Router();
 
@@ -84,6 +84,16 @@ router.route(`${NOTES_ROUTE}/:id`)
     .get(authMiddleware, NotesController.getNoteById)
     .patch(authMiddleware, NotesController.updateNote)
     .delete(authMiddleware, NotesController.deleteNote);
+
+/*****************************************************
+ **                      Images                     **
+ *****************************************************/
+const uploadMiddlware = multer();
+router.route(`${UPLOAD_ROUTE}${IMAGE_ROUTE}`)
+  .post(authMiddleware, uploadMiddlware.single('file'), ImageController.uploadImage)
+
+router.route(IMAGE_ROUTE)
+    .get(authMiddleware, ImageController.getImages);
 
 /*****************************************************
  **                      D&D                        **

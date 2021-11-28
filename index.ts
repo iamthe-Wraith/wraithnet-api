@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 import { apiRouter } from './src/routes/api';
 import { authRouter } from './src/routes/auth';
 import { serviceMiddleware } from './src/middleware/service';
-import { ADMIN_ROUTE, API_ROUTE, AUTH_ROUTE, STATUS_ROUTE } from './src/constants';
+import { ADMIN_ROUTE, API_ROUTE, AUTH_ROUTE, STATUS_ROUTE, UPLOAD_ROUTE } from './src/constants';
 import { adminRouter } from './src/routes/admin';
 
 dotenv.config();
@@ -15,7 +15,7 @@ const port = process.env.PORT || 3001;
 const app = express();
 
 mongoose.connection.on('open', () => console.log('[+] database ready'));
-mongoose.connection.on('error', error => console.log(`[-] database error - ${error.message}`));
+mongoose.connection.on('error', (error: any) => console.log(`[-] database error - ${error.message}`));
 mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_URI}`, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
