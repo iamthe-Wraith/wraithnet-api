@@ -584,13 +584,21 @@ export class DnDService {
             if (isNaN(_pageSize)) throw new CustomError('invalid pageSize found', ERROR.INVALID_ARG);
         }
 
+        let sortCriteria: any;
+
+        if (type === 'item') {
+          sortCriteria = { name: 'asc'};
+        } else {
+          sortCriteria = { _id: 'desc' };
+        }
+
         try {
             const results = await Note
                 .find(query)
                 .populate('tags')
                 .skip(_page * _pageSize)
                 .limit(_pageSize)
-                .sort({ _id: 'desc' })
+                .sort(sortCriteria)
                 .exec();
 
             return {
