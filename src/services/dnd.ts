@@ -1,15 +1,22 @@
+/* eslint-disable radix */
 import { Document } from 'mongoose';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
-import { ERROR } from "../constants";
-import { DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable } from "../models/dnd/daily-checklist-item";
-import { ICollectionResponse, IRequest } from "../types";
-import CustomError, { asCustomError } from "../utils/custom-error";
 import { ObjectID } from 'mongodb';
-import { Campaign, ICampaign, ICampaignRequest, ICampaignSharable } from '../models/dnd/campaign';
+import { ERROR } from '../constants';
+import {
+    DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable,
+} from '../models/dnd/daily-checklist-item';
+import { ICollectionResponse, IRequest } from '../types';
+import CustomError, { asCustomError } from '../utils/custom-error';
+import {
+    Campaign, ICampaign, ICampaignRequest, ICampaignSharable,
+} from '../models/dnd/campaign';
 import { DnDDate } from '../utils/dndDate';
-import { IPC, IPCRef, IPCRequest, IPCSharableRef, PC } from '../models/dnd/pc';
+import {
+    IPC, IPCRef, IPCRequest, IPCSharableRef, PC,
+} from '../models/dnd/pc';
 import { dndExp } from '../../static/dnd-exp';
 import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
 import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
@@ -57,7 +64,7 @@ const getExpForNextLevel = (exp: number) => {
     }
 
     return xp;
-}
+};
 
 const getLevel = (exp: number) => {
     let level = 0;
@@ -69,16 +76,16 @@ const getLevel = (exp: number) => {
                 level = dndExp[i].level;
                 break;
             }
-            
+
             if (dndExp[i + 1].threshold > exp) {
                 level = dndExp[i].level;
                 break;
-            };
+            }
         }
     }
 
     return level;
-}
+};
 
 const parseExp = (exp: string): number => {
     const regex = /\D+/; // get non-numerical characters
@@ -111,10 +118,10 @@ const parseExp = (exp: string): number => {
     if (isInvalid) throw asCustomError(new CustomError('invalid exp received', ERROR.INVALID_ARG));
 
     return minus ? (v * -1) : v;
-}
+};
 
 export class DnDService {
-    static async addChecklistItem (req: IRequest): Promise<IDailyChecklistItem> {
+    static async addChecklistItem(req: IRequest): Promise<IDailyChecklistItem> {
         const { details, text } = (req.body as IDailyChecklistItemRequest);
         const { campaignId } = req.params;
 
@@ -122,7 +129,7 @@ export class DnDService {
         if (!text) throw asCustomError(new CustomError('content is required', ERROR.INVALID_ARG));
         if (typeof text !== 'string') throw asCustomError(new CustomError('invalid content', ERROR.INVALID_ARG));
         if (!!details && typeof details !== 'string') throw asCustomError(new CustomError('invalid content', ERROR.INVALID_ARG));
-        
+
         try {
             const itemConfig: IDailyChecklistItemRequest = {
                 position: await DailyChecklistItem.countDocuments({ owner: req.requestor.id }),
@@ -142,15 +149,15 @@ export class DnDService {
 
             return item;
         } catch (err) {
-            throw asCustomError(err);      
+            throw asCustomError(err);
         }
     }
 
-    static async createCampaign (req: IRequest): Promise<ICampaign> {
+    static async createCampaign(req: IRequest): Promise<ICampaign> {
         const { name, startDate, firstSessionDate } = req.body;
 
         if (!name) throw new CustomError('a name is required', ERROR.INVALID_ARG);
-        
+
         let dndDate = new DnDDate();
 
         if (startDate) {
@@ -189,8 +196,7 @@ export class DnDService {
         }
     }
 
-
-    static async createClass (req: IRequest): Promise<IDnDClass> {
+    static async createClass(req: IRequest): Promise<IDnDClass> {
         const { name } = req.body;
 
         if (!name) throw asCustomError(new CustomError('a class name is required', ERROR.INVALID_ARG));
@@ -208,7 +214,7 @@ export class DnDService {
         }
     }
 
-    static async createNote (req: IRequest, type: NoteType): Promise<INote> {
+    static async createNote(req: IRequest, type: NoteType): Promise<INote> {
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
 
@@ -222,13 +228,13 @@ export class DnDService {
             tags,
             text,
             category: `dnd_${type}`,
-        }
+        };
         const note = await NotesService.createNote(_noteReq as IRequest);
-        
+
         try {
             await Campaign.updateOne({
                 _id: campaign.id,
-                $push: { [`${type}${type === 'misc' ? '' : 's'}`]: note.id }
+                $push: { [`${type}${type === 'misc' ? '' : 's'}`]: note.id },
             });
 
             return note;
@@ -237,8 +243,10 @@ export class DnDService {
         }
     }
 
-    static async createPC (req: IRequest): Promise<IPC> {
-        const { age, name, race, classes = [], exp } = (req.body as IPCRequest);
+    static async createPC(req: IRequest): Promise<IPC> {
+        const {
+            age, name, race, classes = [], exp,
+        } = (req.body as IPCRequest);
         const { campaignId } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found. a pc must be added to a campaign', ERROR.INVALID_ARG));
@@ -250,12 +258,12 @@ export class DnDService {
 
         let _race: IDnDRace;
         let _classes: IDnDClass[];
-        
+
         try {
             const campaigns = await DnDService.getCampaigns(req);
             const campaign = campaigns.find(c => `${c.id}` === campaignId);
             if (!campaign) throw new CustomError('invalid campaign', ERROR.INVALID_ARG);
-        } catch (err) {            
+        } catch (err) {
             throw asCustomError(err);
         }
 
@@ -269,9 +277,7 @@ export class DnDService {
 
         try {
             const allClasses = await DnDService.getClasses(req);
-            const validClasses = classes.filter(c => {
-                return !!allClasses.find(cc => `${cc._id}` === c);
-            });
+            const validClasses = classes.filter(c => !!allClasses.find(cc => `${cc._id}` === c));
             if (validClasses.length !== classes.length) throw new CustomError('only valid class ids allowed', ERROR.INVALID_ARG);
             _classes = validClasses;
         } catch (err) {
@@ -303,7 +309,7 @@ export class DnDService {
             });
 
             if (typeof exp === 'number') pc.exp = exp;
-    
+
             try {
                 const savedPc = await pc.save();
                 const pcRequest = { ...req };
@@ -320,7 +326,7 @@ export class DnDService {
         }
     }
 
-    static async createRace (req: IRequest): Promise<IDnDRace> {
+    static async createRace(req: IRequest): Promise<IDnDRace> {
         const { name } = req.body;
 
         if (!name) throw asCustomError(new CustomError('a name is required', ERROR.INVALID_ARG));
@@ -338,7 +344,7 @@ export class DnDService {
         }
     }
 
-    static async deleteCampaign (req: IRequest): Promise<void> {
+    static async deleteCampaign(req: IRequest): Promise<void> {
         const { campaignId } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
@@ -387,7 +393,7 @@ export class DnDService {
         }
     }
 
-    static async deleteChecklistItem (req: IRequest): Promise<void> {
+    static async deleteChecklistItem(req: IRequest): Promise<void> {
         const { id, campaignId } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
@@ -417,7 +423,7 @@ export class DnDService {
         }
     }
 
-    static async deleteClass (req: IRequest): Promise<void> {
+    static async deleteClass(req: IRequest): Promise<void> {
         const { classId } = req.params;
 
         if (!classId) throw asCustomError(new CustomError('no class id found', ERROR.INVALID_ARG));
@@ -431,7 +437,7 @@ export class DnDService {
         }
     }
 
-    static async deletePC (req: IRequest): Promise<void> {
+    static async deletePC(req: IRequest): Promise<void> {
         const { campaignId, id } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
@@ -442,7 +448,7 @@ export class DnDService {
             owner: req.requestor.id,
             markedForDeletion: false,
             _id: id,
-        }
+        };
 
         let pc: IPC & Document<any, any>;
 
@@ -466,7 +472,7 @@ export class DnDService {
         }
     }
 
-    static async deleteRace (req: IRequest): Promise<void> {
+    static async deleteRace(req: IRequest): Promise<void> {
         const { raceId } = req.params;
 
         if (!raceId) throw asCustomError(new CustomError('no race id found', ERROR.INVALID_ARG));
@@ -480,7 +486,7 @@ export class DnDService {
         }
     }
 
-    static async getCampaign (req: IRequest): Promise<ICampaign & Document<any, any>> {
+    static async getCampaign(req: IRequest): Promise<ICampaign & Document<any, any>> {
         const { campaignId } = req.params;
 
         if (!campaignId) throw new CustomError('no campaignId found', ERROR.INVALID_ARG);
@@ -497,7 +503,7 @@ export class DnDService {
         }
     }
 
-    static async getCampaigns (req: IRequest): Promise<ICampaign[]> {
+    static async getCampaigns(req: IRequest): Promise<ICampaign[]> {
         try {
             const campaigns = await Campaign.find({
                 owner: req.requestor.id,
@@ -509,7 +515,7 @@ export class DnDService {
         }
     }
 
-    static async getChecklist (req: IRequest): Promise<IDailyChecklistItem[]> {
+    static async getChecklist(req: IRequest): Promise<IDailyChecklistItem[]> {
         const { campaignId } = req.params;
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
@@ -522,14 +528,14 @@ export class DnDService {
                     markedForDeletion: false,
                 })
                 .sort({ position: 1 });
-            
+
             return checklist;
         } catch (err: any) {
             throw asCustomError(err);
         }
     }
 
-    static getClasses = async (req: IRequest): Promise<IDnDClass[]> => {
+    static getClasses = async (_: IRequest): Promise<IDnDClass[]> => {
         try {
             const classes = await DnDClass
                 .find({})
@@ -539,9 +545,9 @@ export class DnDService {
         } catch (err) {
             throw asCustomError(err);
         }
-    }
+    };
 
-    static getNotes = async (req: IRequest, type: NoteType ): Promise<ICollectionResponse<INoteRef>> => {
+    static getNotes = async (req: IRequest, type: NoteType): Promise<ICollectionResponse<INoteRef>> => {
         const {
             name,
             tags,
@@ -553,17 +559,17 @@ export class DnDService {
             page: string;
             pageSize: string;
         });
-        
+
         const campaign = await DnDService.getCampaign(req);
         if (!campaign) return;
 
         const query: any = {
             $and: [
                 { owner: req.requestor.id },
-                { _id: { $in: campaign[`${type}${type === 'misc' ? '' : 's' }` as NoteIdList] } },
+                { _id: { $in: campaign[`${type}${type === 'misc' ? '' : 's'}` as NoteIdList] } },
                 { category: `dnd_${type}` },
                 { markedForDeletion: false },
-            ]
+            ],
         };
 
         if (!!name) query.$and.push({ name: { $regex: name, $options: 'i' } });
@@ -588,9 +594,9 @@ export class DnDService {
         let sortCriteria: any;
 
         if (type === 'item') {
-          sortCriteria = { name: 'asc'};
+            sortCriteria = { name: 'asc' };
         } else {
-          sortCriteria = { _id: 'desc' };
+            sortCriteria = { _id: 'desc' };
         }
 
         try {
@@ -604,21 +610,21 @@ export class DnDService {
 
             return {
                 results,
-                count: await Note.countDocuments(query)
+                count: await Note.countDocuments(query),
             };
         } catch (err) {
             throw asCustomError(err);
         }
-    }
+    };
 
-    static async getPC (req: IRequest): Promise<IPC & Document<any, any>> {
+    static async getPC(req: IRequest): Promise<IPC & Document<any, any>> {
         const { campaignId, id } = req.params;
         const query = {
             _id: id,
             campaignId,
             owner: req.requestor.id,
             markedForDeletion: false,
-        }
+        };
 
         try {
             const pc = await PC
@@ -633,14 +639,14 @@ export class DnDService {
         }
     }
 
-    static async getPCInventory (req: IRequest) {
+    static async getPCInventory(req: IRequest) {
         const { campaignId, id } = req.params;
         const query = {
             _id: id,
             campaignId,
             owner: req.requestor.id,
             markedForDeletion: false,
-        }
+        };
 
         try {
             const pc = await PC
@@ -657,14 +663,14 @@ export class DnDService {
         }
     }
 
-    static async getPCs (req: IRequest): Promise<(IPC & Document<any, any>)[]> {
+    static async getPCs(req: IRequest): Promise<(IPC & Document<any, any>)[]> {
         const { campaignId } = req.params;
 
         const query = {
             campaignId,
             owner: req.requestor.id,
             markedForDeletion: false,
-        }
+        };
 
         try {
             return await PC
@@ -678,7 +684,7 @@ export class DnDService {
         }
     }
 
-    static getRaces = async (req: IRequest): Promise<IDnDRace[]> => {
+    static getRaces = async (_: IRequest): Promise<IDnDRace[]> => {
         try {
             const races = await DnDRace
                 .find({})
@@ -687,7 +693,7 @@ export class DnDService {
         } catch (err) {
             throw asCustomError(err);
         }
-    }
+    };
 
     static getSharableCampaign = (campaign: ICampaign): ICampaignSharable => {
         const sharable = {
@@ -696,19 +702,17 @@ export class DnDService {
             owner: campaign.owner,
             name: campaign.name,
             startDate: campaign.startDate,
-            currentDate: campaign.startDate,
+            currentDate: campaign.currentDate,
             firstSessionDate: campaign.firstSessionDate,
         };
 
         return sharable;
-    }
+    };
 
-    static getSharableClass = (c: IDnDClass): IDnDClassSharable => {
-        return {
-            name: c.name,
-            id: c._id,
-        };
-    }
+    static getSharableClass = (c: IDnDClass): IDnDClassSharable => ({
+        name: c.name,
+        id: c._id,
+    });
 
     static getSharableItem = (item: IDailyChecklistItem): IDailyChecklistItemSharable => {
         const sharable: IDailyChecklistItemSharable = {
@@ -723,11 +727,9 @@ export class DnDService {
         if (item.details) sharable.details = item.details;
 
         return sharable;
-    }
+    };
 
-    static getSharableList = (checklist: IDailyChecklistItem[]): IDailyChecklistItemSharable[] => {
-        return checklist.map(item => DnDService.getSharableItem(item));
-    }
+    static getSharableList = (checklist: IDailyChecklistItem[]): IDailyChecklistItemSharable[] => checklist.map(item => DnDService.getSharableItem(item));
 
     static getSharablePC = (pc: IPCRef): IPCSharableRef => {
         try {
@@ -743,18 +745,16 @@ export class DnDService {
                 exp: pc.exp,
                 expForNextLevel: getExpForNextLevel(pc.exp),
                 level: getLevel(pc.exp),
-            }
+            };
         } catch (err) {
             throw asCustomError(err);
         }
-    }
+    };
 
-    static getSharableRace = (race: IDnDRace): IDnDRaceSharable => {
-        return {
-            name: race.name,
-            id: race._id,
-        };
-    }
+    static getSharableRace = (race: IDnDRace): IDnDRaceSharable => ({
+        name: race.name,
+        id: race._id,
+    });
 
     static getStats = async (req: IRequest) => {
         const { campaignId } = req.params;
@@ -766,7 +766,7 @@ export class DnDService {
         const baseAndQuery = [
             { owner: req.requestor.id },
             { markedForDeletion: false },
-        ]
+        ];
 
         const stats: ICampaignStats = {};
 
@@ -775,7 +775,7 @@ export class DnDService {
         }
 
         try {
-            const query: any = { $and: [ ...baseAndQuery ] };
+            const query: any = { $and: [...baseAndQuery] };
             query.$and.push({ _id: { $in: campaign.sessions } });
             query.$and.push({ category: 'dnd_session' });
             stats.sessions = await Note.countDocuments(query);
@@ -784,7 +784,7 @@ export class DnDService {
         }
 
         try {
-            const query: any = { $and: [ ...baseAndQuery ] };
+            const query: any = { $and: [...baseAndQuery] };
             query.$and.push({ _id: { $in: campaign.npcs } });
             query.$and.push({ category: 'dnd_npc' });
             stats.npcs = await Note.countDocuments(query);
@@ -793,7 +793,7 @@ export class DnDService {
         }
 
         try {
-            const query: any = { $and: [ ...baseAndQuery ] };
+            const query: any = { $and: [...baseAndQuery] };
             query.$and.push({ _id: { $in: campaign.locations } });
             query.$and.push({ category: 'dnd_location' });
             stats.locations = await Note.countDocuments(query);
@@ -802,7 +802,7 @@ export class DnDService {
         }
 
         try {
-            const query: any = { $and: [ ...baseAndQuery ] };
+            const query: any = { $and: [...baseAndQuery] };
             query.$and.push({ _id: { $in: campaign.quests } });
             query.$and.push({ category: 'dnd_quest' });
             stats.quests = await Note.countDocuments(query);
@@ -811,7 +811,7 @@ export class DnDService {
         }
 
         try {
-            const query: any = { $and: [ ...baseAndQuery ] };
+            const query: any = { $and: [...baseAndQuery] };
             query.$and.push({ _id: { $in: campaign.items } });
             query.$and.push({ category: 'dnd_item' });
             stats.items = await Note.countDocuments(query);
@@ -831,9 +831,9 @@ export class DnDService {
         }
 
         return stats;
-    }
+    };
 
-    static async updateCampaign (req: IRequest): Promise<ICampaign> {
+    static async updateCampaign(req: IRequest): Promise<ICampaign> {
         const { name, firstSessionDate } = (req.body as ICampaignRequest);
         const { campaignId } = req.params;
         let _firstSessionDate: Dayjs;
@@ -851,19 +851,21 @@ export class DnDService {
         }
 
         try {
-            const result = await Campaign.updateOne({
-                owner: req.requestor.id,
-                _id: campaignId,
-                markedForDeletion: false, 
-            },
-            {
-                name: !!name ? name : null,
-                firstSessionDate: !!_firstSessionDate ? _firstSessionDate.toDate() : null,
-            });
+            const result = await Campaign.updateOne(
+                {
+                    owner: req.requestor.id,
+                    _id: campaignId,
+                    markedForDeletion: false,
+                },
+                {
+                    name: !!name ? name : null,
+                    firstSessionDate: !!_firstSessionDate ? _firstSessionDate.toDate() : null,
+                },
+            );
 
             if (result.nModified === 1) {
                 return await DnDService.getCampaign(req);
-            } else if (result.n === 0) {
+            } if (result.n === 0) {
                 throw new CustomError('campaign not found', ERROR.NOT_FOUND);
             } else {
                 throw new CustomError('an error occurred updating the campaign', ERROR.GEN);
@@ -873,7 +875,7 @@ export class DnDService {
         }
     }
 
-    static async updateCampaignDate (requestor: IUser, campaignId: string, direction: 'next' | 'previous'): Promise<ICampaign> {
+    static async updateCampaignDate(requestor: IUser, campaignId: string, direction: 'next' | 'previous'): Promise<ICampaign> {
         let _firstSessionDate: Dayjs;
 
         if (!campaignId) throw new CustomError('no campaign id found', ERROR.INVALID_ARG);
@@ -883,7 +885,7 @@ export class DnDService {
             const campaign = await Campaign.findOne({
                 owner: requestor.id,
                 _id: campaignId,
-                markedForDeletion: false, 
+                markedForDeletion: false,
             });
 
             if (!campaign) throw new CustomError('Campaign not found.', ERROR.NOT_FOUND);
@@ -893,14 +895,13 @@ export class DnDService {
             campaign.currentDate = dndDate.stringify();
 
             await campaign.save();
-
             return campaign;
         } catch (err: any) {
             throw asCustomError(err);
         }
-  }
+    }
 
-    static async updateChecklistItem (req: IRequest): Promise<IDailyChecklistItem> {
+    static async updateChecklistItem(req: IRequest): Promise<IDailyChecklistItem> {
         const { details, text } = (req.body as IDailyChecklistItemRequest);
         const { id, campaignId } = req.params;
 
@@ -937,8 +938,7 @@ export class DnDService {
         }
     }
 
-
-    static async updateClass (req: IRequest): Promise<IDnDRace> {
+    static async updateClass(req: IRequest): Promise<IDnDRace> {
         const { name } = req.body;
         const { classId } = req.params;
 
@@ -962,11 +962,11 @@ export class DnDService {
                 return _class;
             } catch (err: any) {
                 throw asCustomError(err);
-            } 
+            }
         }
     }
 
-    static async updatePartyXP (req: IRequest): Promise<{ exp: IExpResult, pc: IPCRef }[]> {
+    static async updatePartyXP(req: IRequest): Promise<{ exp: IExpResult, pc: IPCRef }[]> {
         const { exp } = req.body;
         const { campaignId } = req.params;
 
@@ -1002,9 +1002,9 @@ export class DnDService {
                         exp: pc.exp,
                         expForNextLevel: getExpForNextLevel(pc.exp),
                         level: newLevel,
-                        leveledUp
-                    }
-                })
+                        leveledUp,
+                    },
+                });
             } catch (err) {
                 throw asCustomError(err);
             }
@@ -1013,8 +1013,10 @@ export class DnDService {
         return response;
     }
 
-    static async updatePC (req: IRequest): Promise<IPC> {
-        const { age, name, race, classes } = req.body;
+    static async updatePC(req: IRequest): Promise<IPC> {
+        const {
+            age, name, race, classes,
+        } = req.body;
         const { campaignId, id } = req.params;
 
         if (!age && !name && !race && !classes) throw asCustomError(new CustomError('no updatable content found', ERROR.INVALID_ARG));
@@ -1065,13 +1067,13 @@ export class DnDService {
         }
     }
 
-    static async updatePCExp (req: IRequest): Promise<IExpResult> {
+    static async updatePCExp(req: IRequest): Promise<IExpResult> {
         const { exp } = req.body;
         const { campaignId, id } = req.params;
 
-        if (!campaignId) new CustomError('no campaign id found', ERROR.INVALID_ARG);
-        if (!id) new CustomError('no pc id found', ERROR.INVALID_ARG);
-        if (!exp) new CustomError('no updatable exp found', ERROR.INVALID_ARG);
+        if (!campaignId) throw new CustomError('no campaign id found', ERROR.INVALID_ARG);
+        if (!id) throw new CustomError('no pc id found', ERROR.INVALID_ARG);
+        if (!exp) throw new CustomError('no updatable exp found', ERROR.INVALID_ARG);
 
         const xp = parseExp(exp);
 
@@ -1096,14 +1098,14 @@ export class DnDService {
                 exp: pc.exp,
                 expForNextLevel: getExpForNextLevel(pc.exp),
                 level: newLevel,
-                leveledUp
+                leveledUp,
             };
         } catch (err) {
             throw asCustomError(err);
         }
     }
 
-    static async updatePCInventoryItems (req: IRequest): Promise<INoteRef[]> {
+    static async updatePCInventoryItems(req: IRequest): Promise<INoteRef[]> {
         try {
             const pc = await DnDService.getPC(req);
             if (!pc) return;
@@ -1122,7 +1124,7 @@ export class DnDService {
         }
     }
 
-    static async updateRace (req: IRequest): Promise<IDnDRace> {
+    static async updateRace(req: IRequest): Promise<IDnDRace> {
         const { name } = req.body;
         const { raceId } = req.params;
 
@@ -1146,7 +1148,7 @@ export class DnDService {
                 return race;
             } catch (err: any) {
                 throw asCustomError(err);
-            } 
+            }
         }
     }
 }
