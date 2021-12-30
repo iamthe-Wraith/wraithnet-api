@@ -353,6 +353,17 @@ export class DnDController {
         }
     }
 
+    static updateCampaignDate: RequestHandler = async (req: IRequest, res) => {
+        try {
+          const { direction } = req.body;
+          const { campaignId } = req.params;
+            const campaign = await DnDService.updateCampaignDate(req.requestor, campaignId, direction);
+            Response.send(DnDService.getSharableCampaign(campaign), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    }
+
 
     static updateClass: RequestHandler = async (req: IRequest, res) => {
         try {

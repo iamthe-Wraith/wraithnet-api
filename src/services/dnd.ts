@@ -15,6 +15,7 @@ import { DnDRace, IDnDRace, IDnDRaceSharable } from '../models/dnd/race';
 import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
 import { INote, INoteRef, Note } from '../models/note';
 import { NotesService } from './notes';
+import { IUser } from '../models/user';
 
 dayjs.extend(utc);
 
@@ -871,6 +872,33 @@ export class DnDService {
             throw asCustomError(err);
         }
     }
+
+    static async updateCampaignDate (requestor: IUser, campaignId: string, direction: 'next' | 'previous'): Promise<ICampaign> {
+        let _firstSessionDate: Dayjs;
+
+        if (!campaignId) throw new CustomError('no campaign id found', ERROR.INVALID_ARG);
+        if (direction !== 'next' && direction !== 'previous') throw new CustomError('invalid direction. must be "next" or "previous"', ERROR.INVALID_ARG);
+
+        try {
+            const campaign = await Campaign.findOne({
+                owner: requestor.id,
+                _id: campaignId,
+                markedForDeletion: false, 
+            });
+
+            if (!campaign) throw new CustomError('Campaign not found.', ERROR.NOT_FOUND);
+
+            const dndDate = new DnDDate(campaign.currentDate);
+            dndDate[direction === 'next' ? 'toNextDate' : 'toPreviousDate']();
+            campaign.currentDate = dndDate.stringify();
+
+            await campaign.save();
+
+            return campaign;
+        } catch (err: any) {
+            throw asCustomError(err);
+        }
+  }
 
     static async updateChecklistItem (req: IRequest): Promise<IDailyChecklistItem> {
         const { details, text } = (req.body as IDailyChecklistItemRequest);

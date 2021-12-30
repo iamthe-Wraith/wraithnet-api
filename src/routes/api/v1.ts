@@ -165,6 +165,9 @@ router.route(`${DND_ROUTE}/:campaignId/session`)
 router.route(`${DND_ROUTE}/:campaignId/stats`)
     .get(authMiddleware, DnDController.getStats);
 
+router.route(`${DND_ROUTE}/:campaignId/date`)
+    .patch(authMiddleware, DnDController.updateCampaignDate);
+
 router.route(`${DND_ROUTE}/:campaignId?`)
     .get(authMiddleware, DnDController.getCampaigns)
     .post(authMiddleware, DnDController.createCampaign)
