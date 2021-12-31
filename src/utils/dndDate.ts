@@ -99,6 +99,48 @@ export class DnDDate {
         return `${date}, ${this.year} ${this.reckoning}`;
     }
 
+    public toNextDate = () => {
+        let index = 0;
+        for (let i = 0; i < dndCalendar.length; i++) {
+            const day = dndCalendar[i];
+            if (day.date === this.date && day.month === this.month) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index === (dndCalendar.length - 1)) {
+            this._calendarDay = dndCalendar[0];
+            this._year += 1;
+        } else {
+            this._calendarDay = dndCalendar[index + 1];
+        }
+
+        this._date = this._calendarDay.date;
+        this._month = this._calendarDay.month;
+    }
+
+    public toPreviousDate = () => {
+        let index = 0;
+        for (let i = 0; i < dndCalendar.length; i++) {
+            const day = dndCalendar[i];
+            if (day.date === this.date && day.month === this.month) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index === 0) {
+            this._calendarDay = dndCalendar[dndCalendar.length - 1];
+            this._year -= 1;
+        } else {
+            this._calendarDay = dndCalendar[index - 1];
+        }
+
+        this._date = this._calendarDay.date;
+        this._month = this._calendarDay.month;
+    }
+
     static getCalendarDay = (date: number, month: DnDMonth) => {
         const day = dndCalendar.find((dndDay: IDnDCalendarDay) => dndDay.date === date && dndDay.month === month);
         if (!day) throw new Error(`invalid DnDDate ${date} ${month}`);
