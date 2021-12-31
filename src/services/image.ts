@@ -35,9 +35,9 @@ export class ImageService {
 
         const results = await Image
             .find(query)
-            .sort({ name: 'asc' })
             .skip(_page * _pageSize)
             .limit(_pageSize)
+            .sort({ fileName: 'asc' })
             .exec();
 
         return {
