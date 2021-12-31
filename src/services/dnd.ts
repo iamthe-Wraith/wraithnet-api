@@ -1,9 +1,8 @@
 /* eslint-disable radix */
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
-import { ObjectID } from 'mongodb';
 import { ERROR } from '../constants';
 import {
     DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable,
@@ -398,7 +397,7 @@ export class DnDService {
 
         if (!campaignId) throw asCustomError(new CustomError('no campaign id found', ERROR.INVALID_ARG));
         if (!id) throw asCustomError(new CustomError('no checklist item id found', ERROR.INVALID_ARG));
-        if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
+        if (!(Types.ObjectId as any).isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
 
         const query = { owner: req.requestor.id, _id: id };
 

@@ -1,21 +1,23 @@
-import { Document } from 'mongoose';
-import { ObjectID } from 'mongodb';
+/* eslint-disable radix */
+import { Document, Types } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
-import { ERROR } from "../constants";
-import { IUserLogEntries, IUserLogEntry, IUserLogEntrySharable, UserLogEntry } from "../models/user-log";
-import { IRequest } from "../types";
-import { isValidDate } from "../utils";
-import CustomError, { asCustomError } from "../utils/custom-error";
-import { ITag, ITags } from '../models/tag';
+import { ERROR } from '../constants';
+import {
+    IUserLogEntries, IUserLogEntry, IUserLogEntrySharable, UserLogEntry,
+} from '../models/user-log';
+import { IRequest } from '../types';
+import { isValidDate } from '../utils';
+import CustomError, { asCustomError } from '../utils/custom-error';
+import { ITag } from '../models/tag';
 import { TagsService } from './tags';
 import { IUser } from '../models/user';
 
 dayjs.extend(utc);
 
 export class UserLogService {
-    static async create (req: IRequest): Promise<IUserLogEntry> {
+    static async create(req: IRequest): Promise<IUserLogEntry> {
         const { content, tags = [] } = (req.body as { content: string, tags: string[] });
 
         if (!content) throw asCustomError(new CustomError('content is required', ERROR.INVALID_ARG));
@@ -27,7 +29,7 @@ export class UserLogService {
         try {
             const resolvedTags = await UserLogService.createTagsForEntry(tags, req.requestor);
 
-            let entry = new UserLogEntry({
+            const entry = new UserLogEntry({
                 content,
                 createdAt: dayjs.utc().format(),
                 tags: resolvedTags.map(t => (t as ITag)._id),
@@ -40,28 +42,28 @@ export class UserLogService {
 
             return entry;
         } catch (err) {
-            throw asCustomError(err);      
+            throw asCustomError(err);
         }
     }
 
-    static async createTagsForEntry (tags: string[], requestor: IUser): Promise<ITag[]> {
+    static async createTagsForEntry(tags: string[], requestor: IUser): Promise<ITag[]> {
         const request = <IRequest>{
             body: {},
             query: {},
             params: {},
-            requestor: requestor,
+            requestor,
         };
-        
+
         const _tags = tags.map(async (t) => {
             request.query.text = t;
             request.body.text = t;
-            return TagsService.create(request)
+            return TagsService.create(request);
         });
 
         return Promise.all(_tags);
     }
 
-    static async get (req: IRequest, returnFullObject = false): Promise<IUserLogEntry | IUserLogEntries> {
+    static async get(req: IRequest, returnFullObject = false): Promise<IUserLogEntry | IUserLogEntries> {
         const {
             text,
             tags,
@@ -82,7 +84,7 @@ export class UserLogService {
             createdBefore: string;
             page: string;
             pageSize: string;
-        });  
+        });
         const { id } = req.params;
 
         const query: any = {
@@ -102,29 +104,29 @@ export class UserLogService {
         }
 
         if (id) {
-            if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
+            if (!(Types.ObjectId as any).isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
 
             query.$and.push({ _id: id });
         } else {
             if (text) {
                 if (typeof text !== 'string') throw new CustomError('invalid text', ERROR.INVALID_ARG);
-                query.$and.push({ content: { $regex: text }});
+                query.$and.push({ content: { $regex: text } });
             }
 
             if (noTags === 'true') {
                 query.$and.push({
                     $or: [
                         { tags: null },
-                        { "tags.0": { $exists: false } },
-                    ]
+                        { 'tags.0': { $exists: false } },
+                    ],
                 });
             } else if (anyTags === 'true') {
                 query.$and.push({
                     $and: [
-                        { "tags.0": { $exists: true } },
-                        { "tags.0": { $ne: null } },
-                    ]
-                })
+                        { 'tags.0': { $exists: true } },
+                        { 'tags.0': { $ne: null } },
+                    ],
+                });
             } else if (tags) {
                 if (typeof tags !== 'string') {
                     throw new CustomError('invalid tags', ERROR.INVALID_ARG);
@@ -135,20 +137,19 @@ export class UserLogService {
 
             if (created) {
                 if (!isValidDate(created)) throw new CustomError('invalid created date', ERROR.INVALID_ARG);
-                let start = dayjs(created).hour(0).minute(0).second(0)
+                let start = dayjs(created).hour(0).minute(0).second(0);
                 start = start.utc();
                 let end = dayjs(created).hour(23).minute(59).second(59);
                 end = end.utc();
 
-                query.$and.push({ createdAt: { $gte: start.toDate() }});
-                query.$and.push({ createdAt: { $lte: end.toDate() }});
+                query.$and.push({ createdAt: { $gte: start.toDate() } });
+                query.$and.push({ createdAt: { $lte: end.toDate() } });
             } else if (createdBefore || createdAfter) {
                 let _createdBefore: dayjs.Dayjs;
                 let _createdAfter: dayjs.Dayjs;
                 if (createdBefore) {
                     _createdBefore = dayjs.utc(createdBefore).hour(23).minute(59).second(59);
-                if (!_createdBefore.isValid()) throw new CustomError('invalid createdBefore date', ERROR.INVALID_ARG);
-                
+                    if (!_createdBefore.isValid()) throw new CustomError('invalid createdBefore date', ERROR.INVALID_ARG);
                 }
 
                 if (createdAfter) {
@@ -157,7 +158,7 @@ export class UserLogService {
                 }
 
                 if (_createdBefore && _createdAfter && _createdBefore.isBefore(_createdAfter)) {
-                    throw  new CustomError('createdBefore date must be after createdAfter date');
+                    throw new CustomError('createdBefore date must be after createdAfter date');
                 }
 
                 if (_createdAfter) query.$and.push({ createdAt: { $gte: _createdAfter.toDate() } });
@@ -184,17 +185,16 @@ export class UserLogService {
                 .populate('tags')
                 .sort({ _id: 'desc' })
                 .exec();
-        
+
             if (id) {
                 if (results.length) {
                     return results[0];
-                } else {
-                    throw new CustomError(`entry with id: ${id} not found`, ERROR.NOT_FOUND);
                 }
+                throw new CustomError(`entry with id: ${id} not found`, ERROR.NOT_FOUND);
             } else {
                 return {
                     entries: results,
-                    count: await UserLogEntry.countDocuments(query)
+                    count: await UserLogEntry.countDocuments(query),
                 };
             }
         } catch (err) {
@@ -202,22 +202,20 @@ export class UserLogService {
         }
     }
 
-    static getSharable = (entry: IUserLogEntry): IUserLogEntrySharable => {
-        return {
-            id: entry._id,
-            content: entry.content,
-            createdAt: entry.createdAt,
-            owner: entry.owner,
-            tags: entry?.tags.filter(t => !!t).map(t => (TagsService.getSharable(t))) ?? [],
-        };
-    }
+    static getSharable = (entry: IUserLogEntry): IUserLogEntrySharable => ({
+        id: entry._id,
+        content: entry.content,
+        createdAt: entry.createdAt,
+        owner: entry.owner,
+        tags: entry?.tags.filter(t => !!t).map(t => (TagsService.getSharable(t))) ?? [],
+    });
 
     static update = async (req: IRequest): Promise<IUserLogEntry> => {
         const { content, tags } = req.body;
         const { id } = req.params;
 
         if (!id) throw new CustomError('no entry id found', ERROR.NOT_FOUND);
-        if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
+        if (!(Types.ObjectId as any).isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
         if (!content && !tags) throw new CustomError('no updatable content found', ERROR.NOT_FOUND);
         if (content && typeof content !== 'string') throw asCustomError(new CustomError('invalid content', ERROR.INVALID_ARG));
         if (tags && (!Array.isArray(tags) || tags.filter(t => typeof t !== 'string').length)) {
@@ -244,13 +242,13 @@ export class UserLogService {
                 throw asCustomError(err);
             }
         }
-    }
+    };
 
     static delete = async (req: IRequest): Promise<void> => {
         const { id } = req.params;
 
         if (!id) throw new CustomError('no entry id found', ERROR.NOT_FOUND);
-        if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
+        if (!(Types.ObjectId as any).isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
 
         const query = { owner: req.requestor.id, _id: id };
 
@@ -271,5 +269,5 @@ export class UserLogService {
                 throw asCustomError(err);
             }
         }
-    }
+    };
 }

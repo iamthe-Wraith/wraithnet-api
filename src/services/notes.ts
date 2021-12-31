@@ -1,8 +1,11 @@
+/* eslint-disable radix */
 import { Document, Types } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { ICollectionResponse, IRequest } from '../types';
-import { INote, INoteRef, INoteSharableRef, Note, ReservedNoteCategory } from '../models/note';
+import {
+    INote, INoteRef, INoteSharableRef, Note, ReservedNoteCategory,
+} from '../models/note';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import { ERROR } from '../constants';
 import { ROLE } from '../models/user';
@@ -13,8 +16,10 @@ import { ITag, ITags } from '../models/tag';
 dayjs.extend(utc);
 
 export class NotesService {
-    static async createNote (req: IRequest): Promise<INote & Document<any, any>> {
-        const { name, tags, text = '', category, access = [] } = (req.body as {
+    static async createNote(req: IRequest): Promise<INote & Document<any, any>> {
+        const {
+            name, tags, text = '', category, access = [],
+        } = (req.body as {
             name: string;
             tags: string;
             text?: string;
@@ -32,7 +37,7 @@ export class NotesService {
                 throw new CustomError('you do not have permissions to use this reserved category', ERROR.INVALID_ARG);
             }
         } else {
-            throw new CustomError('a note category is required', ERROR.INVALID_ARG)
+            throw new CustomError('a note category is required', ERROR.INVALID_ARG);
         }
 
         // ensure that access is an array and that only contains
@@ -41,7 +46,7 @@ export class NotesService {
             const invalidAccess = access.filter(a => a !== 'all' && !(Types.ObjectId as any).isValid(a));
             if (invalidAccess.length) throw new CustomError(`invalid access id${invalidAccess.length ? 's' : ''} found: ${invalidAccess.join(', ')}`);
         } else {
-            throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG)
+            throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG);
         }
 
         // only allow note to be shared with all users if requestor
@@ -52,7 +57,7 @@ export class NotesService {
             }
 
             if (!Object.values(ReservedNoteCategory).find(c => c === category)) {
-                throw new CustomError('the category cannot be shared with all users', ERROR.INVALID_ARG)
+                throw new CustomError('the category cannot be shared with all users', ERROR.INVALID_ARG);
             }
         }
 
@@ -86,7 +91,7 @@ export class NotesService {
         }
     }
 
-    static async deleteNote (req: IRequest): Promise<void> {
+    static async deleteNote(req: IRequest): Promise<void> {
         let note: INote & Document<any, any>;
         try {
             note = await NotesService.getNoteById(req);
@@ -108,12 +113,12 @@ export class NotesService {
         }
     }
 
-    static async getNoteById (req: IRequest): Promise<INote & Document<any, any>> {
+    static async getNoteById(req: IRequest): Promise<INote & Document<any, any>> {
         const { id } = req.params;
         if (!id) throw new CustomError('a note id is required', ERROR.INVALID_ARG);
 
         try {
-            return await NotesService.getNote(req, [{_id: id}]);
+            return await NotesService.getNote(req, [{ _id: id }]);
         } catch (err) {
             throw asCustomError(err);
         }
@@ -121,16 +126,16 @@ export class NotesService {
 
     /**
      * gets a note by it's slug.
-     * 
+     *
      * @important - assumes the combination of category and slug are unique
      * @param req {IRequest}
      * @returns INote & Document<any, any, INote>
      */
-    static async getNoteBySlug (req: IRequest): Promise<INote & Document<any, any>> {
+    static async getNoteBySlug(req: IRequest): Promise<INote & Document<any, any>> {
         const { category, slug } = req.params;
         if (!category) throw new CustomError('a category is required', ERROR.INVALID_ARG);
         if (!slug) throw new CustomError('a slug is required', ERROR.INVALID_ARG);
-        
+
         try {
             return await NotesService.getNote(req, [{ slug }, { category }]);
         } catch (err) {
@@ -138,15 +143,17 @@ export class NotesService {
         }
     }
 
-    static async getNote (req: IRequest, q: { [key: string]: any }[] = []): Promise<INote & Document<any, any>> {
+    static async getNote(req: IRequest, q: { [key: string]: any }[] = []): Promise<INote & Document<any, any>> {
         const query: any = {
             $and: [
                 ...q,
                 { markedForDeletion: false },
-                { $or: [
-                    { owner: req.requestor.id },
-                    { access: { "$in": [req.requestor.id, 'all'] } }
-                ] }
+                {
+                    $or: [
+                        { owner: req.requestor.id },
+                        { access: { $in: [req.requestor.id, 'all'] } },
+                    ],
+                },
             ],
         };
 
@@ -161,7 +168,7 @@ export class NotesService {
         }
     }
 
-    static async getNotes (req: IRequest): Promise<ICollectionResponse<INoteRef>> {
+    static async getNotes(req: IRequest): Promise<ICollectionResponse<INoteRef>> {
         const {
             name,
             tags,
@@ -182,11 +189,13 @@ export class NotesService {
             $and: [
                 { markedForDeletion: false },
                 { category },
-                { $or: [
-                    { owner: req.requestor.id },
-                    { access: { $in: [req.requestor.id, 'all'] } }
-                ] }
-            ]
+                {
+                    $or: [
+                        { owner: req.requestor.id },
+                        { access: { $in: [req.requestor.id, 'all'] } },
+                    ],
+                },
+            ],
         };
 
         if (!!name) query.$and.push({ name: { $regex: name, $options: 'i' } });
@@ -219,23 +228,25 @@ export class NotesService {
 
             return {
                 results,
-                count: await Note.countDocuments(query)
+                count: await Note.countDocuments(query),
             };
         } catch (err) {
             throw asCustomError(err);
         }
     }
 
-    static async getNotesById (req: IRequest, ids: string[]) {
+    static async getNotesById(req: IRequest, ids: string[]) {
         const query: any = {
             $and: [
                 { markedForDeletion: false },
                 { _id: { $in: ids } },
-                { $or: [
-                    { owner: req.requestor.id },
-                    { access: { $in: [req.requestor.id, 'all'] } }
-                ] }
-            ]
+                {
+                    $or: [
+                        { owner: req.requestor.id },
+                        { access: { $in: [req.requestor.id, 'all'] } },
+                    ],
+                },
+            ],
         };
 
         try {
@@ -251,14 +262,14 @@ export class NotesService {
         }
     }
 
-    static getSharableNote (note: INote) {
+    static getSharableNote(note: INote) {
         return {
             ...NotesService.getSharableNoteRef(note),
             text: note.text,
-        }
+        };
     }
 
-    static getSharableNoteRef (note: INote | INoteRef) {
+    static getSharableNoteRef(note: INote | INoteRef) {
         const noteRef: INoteSharableRef = {
             id: note._id,
             access: note.access,
@@ -275,8 +286,10 @@ export class NotesService {
         return noteRef;
     }
 
-    static async updateNote (req: IRequest): Promise<INote & Document<any, any>> {
-        const { name, tags = [], text, category, access } = (req.body as {
+    static async updateNote(req: IRequest): Promise<INote & Document<any, any>> {
+        const {
+            name, tags = [], text, category, access,
+        } = (req.body as {
             name?: string;
             tags?: string[];
             text?: string;
@@ -302,7 +315,7 @@ export class NotesService {
         if (tags.length) {
             const invalidIds = tags.filter(tag => !(Types.ObjectId as any).isValid(tag));
             if (invalidIds.length) throw new CustomError(`invalid tag id${invalidIds.length > 1 ? 's' : ''} found: ${invalidIds.join(', ')}`, ERROR.INVALID_ARG);
-            
+
             try {
                 const tagsRequest: any = {
                     ...req,
@@ -332,7 +345,6 @@ export class NotesService {
             note.category = category;
         }
 
-
         if (access) {
             // ensure that access is an array and that only contains
             // `all` (admins only) or value user ids
@@ -340,7 +352,7 @@ export class NotesService {
                 const invalidAccess = access.filter(a => a !== 'all' && !(Types.ObjectId as any).isValid(a));
                 if (invalidAccess.length) throw new CustomError(`invalid access id${invalidAccess.length ? 's' : ''} found: ${invalidAccess.join(', ')}`);
             } else {
-                throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG)
+                throw new CustomError('invalid access rights provided', ERROR.INVALID_ARG);
             }
 
             // only allow note to be shared with all users if requestor
@@ -351,7 +363,7 @@ export class NotesService {
                 }
 
                 if (!Object.values(ReservedNoteCategory).find(c => c === category)) {
-                    throw new CustomError('the category cannot be shared with all users', ERROR.INVALID_ARG)
+                    throw new CustomError('the category cannot be shared with all users', ERROR.INVALID_ARG);
                 }
             }
         }

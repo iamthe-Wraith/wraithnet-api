@@ -1,12 +1,14 @@
-import { Document } from 'mongoose';
-import { ObjectID } from "mongodb";
-import { ERROR } from "../constants";
-import { ITag, ITags, ITagSharable, Tag } from "../models/tag";
-import { IRequest } from "../types";
-import CustomError, { asCustomError } from "../utils/custom-error";
+/* eslint-disable radix */
+import { Document, Types } from 'mongoose';
+import { ERROR } from '../constants';
+import {
+    ITag, ITags, ITagSharable, Tag,
+} from '../models/tag';
+import { IRequest } from '../types';
+import CustomError, { asCustomError } from '../utils/custom-error';
 
 export class TagsService {
-    static async create (req: IRequest): Promise<ITag> {
+    static async create(req: IRequest): Promise<ITag> {
         const { text } = (req.body as { text: string });
 
         if (!text) throw asCustomError(new CustomError('content is required', ERROR.INVALID_ARG));
@@ -37,15 +39,15 @@ export class TagsService {
 
             return tag;
         } catch (err) {
-            throw asCustomError(err);      
+            throw asCustomError(err);
         }
     }
 
-    static async delete (req: IRequest): Promise<void> {
+    static async delete(req: IRequest): Promise<void> {
         const { id } = req.params;
 
         if (!id) throw new CustomError('no entry id found', ERROR.NOT_FOUND);
-        if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
+        if (!(Types.ObjectId as any).isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
 
         const query = { owner: req.requestor.id, _id: id };
 
@@ -68,7 +70,7 @@ export class TagsService {
         }
     }
 
-    static async getTags (req: IRequest): Promise<ITags> {
+    static async getTags(req: IRequest): Promise<ITags> {
         const {
             ids,
             text,
@@ -99,7 +101,7 @@ export class TagsService {
 
         if (text) {
             if (typeof text !== 'string') throw new CustomError('invalid text', ERROR.INVALID_ARG);
-            query.$and.push({ text: { $eq: text }});
+            query.$and.push({ text: { $eq: text } });
         }
 
         if (ids) {
@@ -115,10 +117,10 @@ export class TagsService {
                 .limit(_pageSize)
                 .sort({ text: 'asc' })
                 .exec();
-        
+
             return {
                 results,
-                count: await Tag.countDocuments(query)
+                count: await Tag.countDocuments(query),
             };
         } catch (err) {
             throw asCustomError(err);
@@ -137,29 +139,26 @@ export class TagsService {
             const tag = await Tag.findOne(query);
             if (tag) {
                 return tag;
-            } else {
-                throw new CustomError(`tag with id: ${id} not found`, ERROR.NOT_FOUND);
             }
+            throw new CustomError(`tag with id: ${id} not found`, ERROR.NOT_FOUND);
         } catch (err) {
             throw asCustomError(err);
         }
-    }
+    };
 
-    static getSharable = (tag: ITag): ITagSharable => {
-        return {
-            id: tag._id,
-            text: tag.text,
-            createdAt: tag.createdAt,
-            owner: tag.owner,
-        };
-    }
+    static getSharable = (tag: ITag): ITagSharable => ({
+        id: tag._id,
+        text: tag.text,
+        createdAt: tag.createdAt,
+        owner: tag.owner,
+    });
 
     static update = async (req: IRequest): Promise<ITag> => {
         const { text } = req.body;
         const { id } = req.params;
 
         if (!id) throw new CustomError('no entry id found', ERROR.NOT_FOUND);
-        if (!ObjectID.isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
+        if (!(Types.ObjectId as any).isValid(id)) throw new CustomError('invalid id found', ERROR.INVALID_ARG);
         if (!text) throw new CustomError('no updatable content found', ERROR.NOT_FOUND);
         if (text && typeof text !== 'string') throw asCustomError(new CustomError('invalid content', ERROR.INVALID_ARG));
 
@@ -182,5 +181,5 @@ export class TagsService {
                 throw asCustomError(err);
             }
         }
-    }
+    };
 }
