@@ -6,7 +6,7 @@ import {
     IImage, IImages, IImageSharable, Image,
 } from '../models/image';
 import { ERROR } from '../constants';
-import { IRequest } from '../types';
+import { IRequest } from '../types/request';
 import CustomError, { asCustomError } from '../utils/custom-error';
 
 const S3 = require('aws-sdk/clients/s3');

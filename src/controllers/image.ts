@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 
 import { Response } from '../utils/response';
-import { IRequest } from '../types';
+import { IRequest } from '../types/request';
 import { ImageService } from '../services/image';
 
 export class ImageController {

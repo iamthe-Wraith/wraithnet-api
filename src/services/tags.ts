@@ -4,7 +4,7 @@ import { ERROR } from '../constants';
 import {
     ITag, ITags, ITagSharable, Tag,
 } from '../models/tag';
-import { IRequest } from '../types';
+import { IRequest } from '../types/request';
 import CustomError, { asCustomError } from '../utils/custom-error';
 
 export class TagsService {

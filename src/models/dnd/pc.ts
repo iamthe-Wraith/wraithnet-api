@@ -8,6 +8,7 @@ import { ICampaign } from './campaign';
 import { IDnDRace } from './race';
 import { IDnDClass } from './class';
 import { INote, INoteSharableRef } from '../note';
+import { IDnDEvent } from './event';
 
 dayjs.extend(utc);
 
@@ -28,6 +29,7 @@ export interface IPCRequest {
     race: IDnDRace['id'];
     classes: IDnDClass['id'][];
     age: number;
+    birthday: IDnDEvent['id'];
     exp: number;
     note: string;
 }
@@ -91,17 +93,21 @@ const PCSchema = new mongoose.Schema({
         required: true,
         default: 0,
     },
+    birthday: {
+        type: Schema.Types.ObjectId,
+        ref: 'dnd-event',
+    },
     inventory: [{
         type: Schema.Types.ObjectId,
-        ref: 'note'
+        ref: 'note',
     }],
     note: {
         type: Schema.Types.ObjectId,
-        ref: 'note'
+        ref: 'note',
     },
     owner: {
         type: Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'user',
     },
     campaignId: {
         type: Schema.Types.ObjectId,
@@ -117,7 +123,7 @@ const PCSchema = new mongoose.Schema({
     markedForDeletion: {
         type: Boolean,
         default: false,
-    }
+    },
 });
 
 export const PC = mongoose.model<IPC>('pc', PCSchema);

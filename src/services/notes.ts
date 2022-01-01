@@ -2,7 +2,8 @@
 import { Document, Types } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { ICollectionResponse, IRequest } from '../types';
+import { ICollectionResponse } from '../types';
+import { IRequest } from '../types/request';
 import {
     INote, INoteRef, INoteSharableRef, Note, ReservedNoteCategory,
 } from '../models/note';

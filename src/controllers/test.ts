@@ -1,9 +1,9 @@
-import { RequestHandler } from "express";
-import { IRequest } from "../types";
-import { Response } from '../utils/response';
+import { RequestHandler } from 'express';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import CustomError from "../utils/custom-error";
+import { IRequest } from '../types/request';
+import { Response } from '../utils/response';
+import CustomError from '../utils/custom-error';
 
 dayjs.extend(utc);
 
@@ -15,5 +15,5 @@ export class TestController {
         } catch (err) {
             Response.error(err as CustomError, req, res);
         }
-    }
+    };
 }

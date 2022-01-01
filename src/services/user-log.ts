@@ -7,7 +7,7 @@ import { ERROR } from '../constants';
 import {
     IUserLogEntries, IUserLogEntry, IUserLogEntrySharable, UserLogEntry,
 } from '../models/user-log';
-import { IRequest } from '../types';
+import { IRequest } from '../types/request';
 import { isValidDate } from '../utils';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import { ITag } from '../models/tag';

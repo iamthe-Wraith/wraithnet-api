@@ -27,7 +27,7 @@ export interface ITags {
 const TagSchema = new mongoose.Schema({
     owner: {
         type: Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'user',
     },
     text: {
         required: true,
@@ -44,7 +44,7 @@ const TagSchema = new mongoose.Schema({
     markedForDeletion: {
         type: Boolean,
         default: false,
-    }
+    },
 });
 
 export const Tag = mongoose.model<ITag>('tag', TagSchema);

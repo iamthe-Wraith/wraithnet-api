@@ -1,6 +1,7 @@
-import { dndCalendar, DnDMonth, IDnDCalendarDay } from "../../static/dnd-calendar";
+/* eslint-disable radix */
+import { dndCalendar, DnDMonth, IDnDCalendarDay } from '../../static/dnd-calendar';
 
-
+// eslint-disable-next-line no-shadow
 export enum Reckoning {
     DR = 'DR',
     CR = 'CR',
@@ -23,7 +24,7 @@ export class DnDDate {
     private _reckoning: Reckoning;
     private _calendarDay: IDnDCalendarDay;
 
-    constructor (d?: string) {
+    constructor(d?: string) {
         const [date, month, year, reckoning, calendarDay] = DnDDate.parseStringToDnDDate(d);
         this._date = date;
         this._month = month;
@@ -79,9 +80,7 @@ export class DnDDate {
         this._year = y;
     }
 
-    public clone = () => {
-        return new DnDDate(this.stringify());
-    }
+    public clone = () => new DnDDate(this.stringify());
 
     public isSame = (d: DnDDate) => {
         if (!d) return false;
@@ -89,7 +88,7 @@ export class DnDDate {
         return this._calendarDay.special
             ? d.month === this.month && d?.holiday?.name === this.holiday.name
             : d.date === this.date && d.month === this.month && d.year === this.year && d.reckoning === this.reckoning;
-    }
+    };
 
     public stringify = () => {
         const date = this._calendarDay.special
@@ -97,7 +96,7 @@ export class DnDDate {
             : `${this.date} ${this.month}`;
 
         return `${date}, ${this.year} ${this.reckoning}`;
-    }
+    };
 
     public toNextDate = () => {
         let index = 0;
@@ -110,7 +109,8 @@ export class DnDDate {
         }
 
         if (index === (dndCalendar.length - 1)) {
-            this._calendarDay = dndCalendar[0];
+            const [day] = dndCalendar;
+            this._calendarDay = day;
             this._year += 1;
         } else {
             this._calendarDay = dndCalendar[index + 1];
@@ -118,7 +118,7 @@ export class DnDDate {
 
         this._date = this._calendarDay.date;
         this._month = this._calendarDay.month;
-    }
+    };
 
     public toPreviousDate = () => {
         let index = 0;
@@ -139,22 +139,22 @@ export class DnDDate {
 
         this._date = this._calendarDay.date;
         this._month = this._calendarDay.month;
-    }
+    };
 
     static getCalendarDay = (date: number, month: DnDMonth) => {
         const day = dndCalendar.find((dndDay: IDnDCalendarDay) => dndDay.date === date && dndDay.month === month);
         if (!day) throw new Error(`invalid DnDDate ${date} ${month}`);
         return day;
-    }
+    };
 
     // requires format: DD MMM, YYYY RR
     static parseStringToDnDDate = (d = '1 Hammer, 1 DR'): [number, DnDMonth, number, Reckoning, IDnDCalendarDay] => {
         const [part1, part2] = d.split(',');
-        const holiday = dndCalendar.find(d => d.holiday?.name === part1 || !!d.holiday?.alternativeNames?.find(a => a === part1));
+        const holiday = dndCalendar.find(calendarDay => calendarDay.holiday?.name === part1 || !!calendarDay.holiday?.alternativeNames?.find(a => a === part1));
         const [yearStr, reckoning] = part2.trim().split(' ');
         let date: number;
         let month: string;
-        if (holiday) {        
+        if (holiday) {
             date = holiday.date;
             month = holiday.month;
         } else {
@@ -163,7 +163,7 @@ export class DnDDate {
             if (!dateStr || !yearStr) throw Error(`invalid DnDDate ${d}`);
             date = parseInt(dateStr);
         }
-        
+
         const year = parseInt(yearStr);
         if (isNaN(year)) throw Error(`invalid DnDDate: ${d}`);
 
@@ -172,5 +172,5 @@ export class DnDDate {
         if (!Object.values(Reckoning).filter(r => r === reckoning).length) throw new Error(`invalid DnDDate ${d}`);
 
         return [date, (month as DnDMonth), year, (reckoning as Reckoning), calendarDay];
-    }
+    };
 }

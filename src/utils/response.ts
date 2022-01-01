@@ -3,7 +3,7 @@ import express from 'express';
 import CustomError from '../utils/custom-error';
 import Token from './token';
 import { AUTHORIZATION_HEADER, TOKEN_REMOVE } from '../constants';
-import { IRequest } from '../types';
+import { IRequest } from '../types/request';
 
 const setAuthHeader = (
   req: IRequest,
@@ -23,7 +23,7 @@ const setAuthHeader = (
       }
 
       res.header(AUTHORIZATION_HEADER, token);
-    } catch (err) {
+    } catch (err: any) {
       let error:CustomError;
 
       if (err.isCustom) {

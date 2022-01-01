@@ -7,7 +7,8 @@ import { ERROR } from '../constants';
 import {
     DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable,
 } from '../models/dnd/daily-checklist-item';
-import { ICollectionResponse, IRequest } from '../types';
+import { ICollectionResponse } from '../types';
+import { IRequest } from '../types/request';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import {
     Campaign, ICampaign, ICampaignRequest, ICampaignSharable,
@@ -22,6 +23,7 @@ import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
 import { INote, INoteRef, Note } from '../models/note';
 import { NotesService } from './notes';
 import { IUser } from '../models/user';
+import { DnDEvent, IDnDEvent } from '../models/dnd/event';
 
 dayjs.extend(utc);
 
@@ -546,6 +548,23 @@ export class DnDService {
         }
     };
 
+    static getEvents = async (requestor: IUser, campaignId: string, date: string) => {
+        try {
+            // initialization will ensure is a valid date
+            const _date = new DnDDate(date);
+
+            const events = await DnDEvent.find({
+                owner: requestor._id,
+                campaignId,
+                date: _date.stringify(),
+            });
+
+            return events;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    };
+
     static getNotes = async (req: IRequest, type: NoteType): Promise<ICollectionResponse<INoteRef>> => {
         const {
             name,
@@ -713,6 +732,20 @@ export class DnDService {
         id: c._id,
     });
 
+    static getSharableEvent = (event: IDnDEvent) => {
+        const sharable = {
+            campaignId: event.campaignId,
+            createdAt: event.createdAt,
+            date: event.date,
+            description: event.description,
+            id: event._id,
+            lastModified: event.lastModified,
+            owner: event.owner,
+        };
+
+        return sharable;
+    };
+
     static getSharableItem = (item: IDailyChecklistItem): IDailyChecklistItemSharable => {
         const sharable: IDailyChecklistItemSharable = {
             id: item._id,
@@ -741,6 +774,7 @@ export class DnDService {
                 race: DnDService.getSharableRace(pc.race),
                 classes: (pc.classes || []).map(c => DnDService.getSharableClass(c)),
                 age: pc.age,
+                birthday: pc.birthday,
                 exp: pc.exp,
                 expForNextLevel: getExpForNextLevel(pc.exp),
                 level: getLevel(pc.exp),

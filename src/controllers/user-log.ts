@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 
 import { Response } from '../utils/response';
-import { IRequest } from '../types';
+import { IRequest } from '../types/request';
 import { UserLogService } from '../services/user-log';
 import { IUserLogEntries, IUserLogEntry } from '../models/user-log';
 

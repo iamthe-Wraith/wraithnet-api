@@ -1,6 +1,3 @@
-import { Request, Response, NextFunction } from 'express';
-import { IUser } from './models/user';
-
 export interface IBaseResource {
     createdAt?: Date;
     lastModified?: Date;
@@ -14,7 +11,7 @@ export interface ICollectionResponse<T> {
 export interface ICustomErrorBody {
     name: string;
     code: number;
-};
+}
 
 export interface ICustomError {
     AUTHENTICATION: ICustomErrorBody
@@ -40,24 +37,9 @@ export interface IRegexQuery {
     $regex: RegExp | string;
 }
 
-export interface IRequest extends Request {
-    requestor?: IUser;
-}
-
-export interface IPostRequest<T> extends IRequest {
-    body: T;
-}
-
-export type IRequestHandler = (req: IRequest, res: Response, next: NextFunction) => void
-
 export interface ITokenPayload {
     username:string;
     exp?:number;
-}
-
-export interface IUserGetResponse {
-    users: IUser[];
-    count?: number;
 }
 
 export interface IFilter {

@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
 import { IBaseResource } from '../../types';
@@ -50,31 +50,31 @@ const CampaignSchema = new mongoose.Schema({
     },
     items: [{
         type: Schema.Types.ObjectId,
-        ref: 'note'        
+        ref: 'note',
     }],
     locations: [{
         type: Schema.Types.ObjectId,
-        ref: 'note'
+        ref: 'note',
     }],
     misc: [{
         type: Schema.Types.ObjectId,
-        ref: 'note'
+        ref: 'note',
     }],
     npcs: [{
         type: Schema.Types.ObjectId,
-        ref: 'note'
+        ref: 'note',
     }],
     quests: [{
         type: Schema.Types.ObjectId,
-        ref: 'note'
+        ref: 'note',
     }],
     sessions: [{
         type: Schema.Types.ObjectId,
-        ref: 'note'
+        ref: 'note',
     }],
     owner: {
         type: Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'user',
     },
     createdAt: {
         type: Date,
@@ -86,7 +86,7 @@ const CampaignSchema = new mongoose.Schema({
     markedForDeletion: {
         type: Boolean,
         default: false,
-    }
+    },
 });
 
 export const Campaign = mongoose.model<ICampaign>('campaign', CampaignSchema);
