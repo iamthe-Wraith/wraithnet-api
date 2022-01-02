@@ -297,10 +297,18 @@ export class DnDService {
             throw asCustomError(err);
         }
 
-        let _birthday: DnDDate = null;
+        let _birthdayEvent: IDnDEvent = null;
         if (!!birthday) {
             try {
-                _birthday = new DnDDate(birthday);
+                const _birthday = new DnDDate(birthday);
+                _birthdayEvent = new DnDEvent({
+                    owner: req.requestor._id,
+                    campaignId,
+                    date: _birthday.stringify(),
+                    description: `${name}'s birthday`,
+                });
+
+                _birthdayEvent = await _birthdayEvent.save();
             } catch (err) {
                 throw new CustomError('Invalid birthday', ERROR.INVALID_ARG);
             }
@@ -316,7 +324,7 @@ export class DnDService {
                 classes: _classes,
                 age,
                 exp: 0,
-                birthday: _birthday?.stringify(),
+                birthday: _birthdayEvent,
             });
 
             if (typeof exp === 'number') pc.exp = exp;
@@ -710,6 +718,7 @@ export class DnDService {
                 .populate('classes')
                 .populate('race')
                 .populate('note')
+                .populate('birthday')
                 .sort({ name: 1 });
         } catch (err) {
             throw asCustomError(err);
@@ -747,6 +756,8 @@ export class DnDService {
     });
 
     static getSharableEvent = (event: IDnDEvent) => {
+        if (!event) return null;
+
         const sharable = {
             campaignId: event.campaignId,
             createdAt: event.createdAt,
@@ -788,7 +799,7 @@ export class DnDService {
                 race: DnDService.getSharableRace(pc.race),
                 classes: (pc.classes || []).map(c => DnDService.getSharableClass(c)),
                 age: pc.age,
-                birthday: pc.birthday,
+                birthday: DnDService.getSharableEvent(pc.birthday),
                 exp: pc.exp,
                 expForNextLevel: getExpForNextLevel(pc.exp),
                 level: getLevel(pc.exp),
