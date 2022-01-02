@@ -474,6 +474,7 @@ export class DnDService {
             pc.markedForDeletion = true;
 
             // TODO: mark note as deleted
+            // TODO: mark birthday event for deletion
 
             try {
                 await pc.save();
@@ -565,8 +566,9 @@ export class DnDService {
 
             const events = await DnDEvent.find({
                 owner: requestor._id,
-                campaignId,
+                markedForDeletion: false,
                 date: _date.stringify(),
+                campaignId,
             });
 
             return events;
