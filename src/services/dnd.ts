@@ -246,7 +246,7 @@ export class DnDService {
 
     static async createPC(req: IRequest): Promise<IPC> {
         const {
-            age, name, race, classes = [], exp,
+            age, name, race, classes = [], exp, birthday,
         } = (req.body as IPCRequest);
         const { campaignId } = req.params;
 
@@ -297,6 +297,15 @@ export class DnDService {
             throw asCustomError(err);
         }
 
+        let _birthday: DnDDate = null;
+        if (!!birthday) {
+            try {
+                _birthday = new DnDDate(birthday);
+            } catch (err) {
+                throw new CustomError('Invalid birthday', ERROR.INVALID_ARG);
+            }
+        }
+
         if (!!_race && !!_classes) {
             const pc = new PC({
                 owner: req.requestor.id,
@@ -307,6 +316,7 @@ export class DnDService {
                 classes: _classes,
                 age,
                 exp: 0,
+                birthday: _birthday?.stringify(),
             });
 
             if (typeof exp === 'number') pc.exp = exp;

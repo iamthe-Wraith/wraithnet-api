@@ -12,18 +12,6 @@ import { IDnDEvent } from './event';
 
 dayjs.extend(utc);
 
-/*
-- name
-- race
-- class
-- exp
-- level
-- events (like birthday)
-- inventory
-- contacts(npcs) (will need to be able to add notes for how they know them...these will need to be stored separately from the npc's info)
-- notes/content (used in editor)
-*/
-
 export interface IPCRequest {
     name: string;
     race: IDnDRace['id'];
