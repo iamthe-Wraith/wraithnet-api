@@ -45,7 +45,10 @@ export class Response {
         tkn?:string,
     ) {
         setAuthHeader(req, res, tkn);
-        res.status(error.data.code).json({ message: error.message });
+        res.status(error.data.code).json({
+            name: error.data.name,
+            message: error.message,
+        });
     }
 
     static send(

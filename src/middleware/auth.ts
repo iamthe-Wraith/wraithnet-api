@@ -4,7 +4,7 @@ import CustomError from '../utils/custom-error';
 import { Response } from '../utils/response';
 import Token from '../utils/token';
 import { UsersService } from '../services/user';
-import { AUTHORIZATION_HEADER, TOKEN_REMOVE } from '../constants';
+import { AUTHORIZATION_HEADER, ERROR, TOKEN_REMOVE } from '../constants';
 import { IRequest } from '../types/request';
 
 export const authMiddleware:RequestHandler = async (req:IRequest, res, next) => {
@@ -31,7 +31,7 @@ export const authMiddleware:RequestHandler = async (req:IRequest, res, next) => 
             if (err.isCustomError) {
                 error = err;
             } else {
-                error = new CustomError(err.message);
+                error = new CustomError(err.message, ERROR.UNAUTHORIZED);
             }
 
             Response.error(error, req, res, TOKEN_REMOVE);
