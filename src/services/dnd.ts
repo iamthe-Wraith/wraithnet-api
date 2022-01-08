@@ -578,8 +578,6 @@ export class DnDService {
             query.$and = [...query.$and, ...tags.split(',').map(t => ({ tags: t }))];
         }
 
-        console.log(query);
-
         let _page = 0;
         if (page) {
             _page = parseInt(page);
