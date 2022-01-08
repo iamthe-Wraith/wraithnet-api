@@ -1107,8 +1107,7 @@ export class DnDService {
                 .findOne(query)
                 .populate('classes')
                 .populate('race')
-                .populate('note')
-                .populate('birthday');
+                .populate('note');
 
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
         } catch (err) {
@@ -1120,7 +1119,24 @@ export class DnDService {
             if (name) pc.name = name;
             if (race) pc.race = race;
             if (classes) pc.classes = classes;
-            if (_birthday) pc.birthday = _birthday.stringify();
+            if (_birthday) {
+                try {
+                    const bday = !!pc.birthday
+                        ? await DnDEvent.findOne({ _id: pc.birthday })
+                        : new DnDEvent({
+                            owner: req.requestor._id,
+                            campaignId,
+                            date: _birthday.stringify(),
+                            description: `${name}'s birthday`,
+                        });
+
+                    bday.date = _birthday.stringify();
+                    await bday.save();
+                    pc.birthday = bday;
+                } catch (err: any) {
+                    throw new CustomError(err.message);
+                }
+            }
 
             try {
                 await pc.save();

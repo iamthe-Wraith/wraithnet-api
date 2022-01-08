@@ -203,7 +203,7 @@ export class NotesService {
 
         if (!!tags) {
             if (typeof tags !== 'string') throw new CustomError('invalid tags', ERROR.INVALID_ARG);
-            query.$and.push({ $or: tags.split(',').map(t => ({ tags: t })) });
+            query.$and = [...query.$and, ...tags.split(',').map(t => ({ tags: t }))];
         }
 
         let _page = 0;
