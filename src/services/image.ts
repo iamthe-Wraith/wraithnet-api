@@ -16,9 +16,10 @@ dayjs.extend(utc);
 
 export interface IGetImageArgs {
     requestor: IUser;
-    page?: number,
-    pageSize?: number,
-    fileName?: string,
+    page?: number;
+    pageSize?: number;
+    fileName?: string;
+    fileTypes?: string[];
 }
 
 export class ImageService {
@@ -27,12 +28,20 @@ export class ImageService {
         page,
         pageSize,
         fileName,
+        fileTypes = [],
     }: IGetImageArgs): Promise<IImages> {
         const query: any = {
             $and: [{ owner: requestor.id }],
         };
 
         if (!!fileName) query.$and.push({ fileName: { $regex: fileName, $options: 'i' } });
+        if (!!fileTypes && fileTypes.length) {
+            query.$and.push({
+                $or: fileTypes.map(fileType => ({
+                    fileName: { $regex: `.${fileType}`, $options: 'i' },
+                })),
+            });
+        }
 
         const results = await Image
             .find(query)

@@ -7,9 +7,22 @@ import { ImageService } from '../services/image';
 import CustomError from '../utils/custom-error';
 import { ERROR } from '../constants';
 
+interface IGetQueryParams {
+    page: string;
+    pageSize: string;
+    fileName: string;
+    fileTypes: string;
+}
+
 export class ImageController {
     static getImages:RequestHandler = async (req:IRequest, res) => {
-        const { page, pageSize, fileName } = (req.query as { page: string, pageSize: string, fileName: string });
+        const {
+            page,
+            pageSize,
+            fileName,
+            fileTypes,
+        } = (req.query as unknown as IGetQueryParams);
+
         try {
             let _page = 0;
             if (page) {
@@ -27,6 +40,7 @@ export class ImageController {
                 requestor: req.requestor,
                 page: _page,
                 pageSize: _pageSize,
+                fileTypes: fileTypes.split(','),
                 fileName,
             });
             Response.send({ ...images, results: images.results.map(image => ImageService.getSharableImage(image)) }, req, res);
