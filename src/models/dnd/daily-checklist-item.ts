@@ -31,7 +31,7 @@ export interface IDailyChecklistItemSharable extends IBaseDailyChecklistItem {
 const DailyChecklistItemSchema = new mongoose.Schema({
     owner: {
         type: Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'user',
     },
     campaignId: {
         type: Schema.Types.ObjectId,
@@ -57,7 +57,7 @@ const DailyChecklistItemSchema = new mongoose.Schema({
     markedForDeletion: {
         type: Boolean,
         default: false,
-    }
+    },
 });
 
 export const DailyChecklistItem = mongoose.model<IDailyChecklistItem>('dailyChecklistItem', DailyChecklistItemSchema);

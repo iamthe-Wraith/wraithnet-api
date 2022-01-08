@@ -6,37 +6,47 @@ import {
     IImage, IImages, IImageSharable, Image,
 } from '../models/image';
 import { ERROR } from '../constants';
-import { IRequest } from '../types';
+import { IRequest } from '../types/request';
 import CustomError, { asCustomError } from '../utils/custom-error';
+import { IUser } from '../models/user';
 
 const S3 = require('aws-sdk/clients/s3');
 
 dayjs.extend(utc);
 
-export class ImageService {
-    static async getImages(req: IRequest): Promise<IImages> {
-        const { page, pageSize } = (req.query as { page: string, pageSize: string });
+export interface IGetImageArgs {
+    requestor: IUser;
+    page?: number;
+    pageSize?: number;
+    fileName?: string;
+    fileTypes?: string[];
+}
 
+export class ImageService {
+    static async getImages({
+        requestor,
+        page,
+        pageSize,
+        fileName,
+        fileTypes = [],
+    }: IGetImageArgs): Promise<IImages> {
         const query: any = {
-            $and: [{ owner: req.requestor.id }],
+            $and: [{ owner: requestor.id }],
         };
 
-        let _page = 0;
-        if (page) {
-            _page = parseInt(page);
-            if (isNaN(_page)) throw new CustomError('invalid page found', ERROR.INVALID_ARG);
-        }
-
-        let _pageSize = 50;
-        if (pageSize) {
-            _pageSize = parseInt(pageSize);
-            if (isNaN(_pageSize)) throw new CustomError('invalid pageSize found', ERROR.INVALID_ARG);
+        if (!!fileName) query.$and.push({ fileName: { $regex: fileName, $options: 'i' } });
+        if (!!fileTypes && fileTypes.length) {
+            query.$and.push({
+                $or: fileTypes.map(fileType => ({
+                    fileName: { $regex: `.${fileType}`, $options: 'i' },
+                })),
+            });
         }
 
         const results = await Image
             .find(query)
-            .skip(_page * _pageSize)
-            .limit(_pageSize)
+            .skip(page * pageSize)
+            .limit(pageSize)
             .sort({ fileName: 'asc' })
             .exec();
 

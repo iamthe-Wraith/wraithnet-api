@@ -1,7 +1,7 @@
-import { RequestHandler } from "express";
-import { ITag, ITags } from "../models/tag";
-import { TagsService } from "../services/tags";
-import { IRequest } from "../types";
+import { RequestHandler } from 'express';
+import { ITags } from '../models/tag';
+import { TagsService } from '../services/tags';
+import { IRequest } from '../types/request';
 import { Response } from '../utils/response';
 
 export class TagsController {
@@ -12,7 +12,7 @@ export class TagsController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    }
+    };
 
     static delete: RequestHandler = async (req: IRequest, res) => {
         try {
@@ -20,8 +20,8 @@ export class TagsController {
             Response.send(null, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
-        }   
-    }
+        }
+    };
 
     static get: RequestHandler = async (req: IRequest, res) => {
         try {
@@ -30,13 +30,13 @@ export class TagsController {
                 const result = {
                     ...tags,
                     results: (tags as ITags).results.map(t => TagsService.getSharable(t)),
-                }
+                };
                 Response.send(result, req, res);
             }
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    }
+    };
 
     static update: RequestHandler = async (req: IRequest, res) => {
         try {
@@ -44,6 +44,6 @@ export class TagsController {
             Response.send(TagsService.getSharable(tag), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
-        }   
-    }
+        }
+    };
 }

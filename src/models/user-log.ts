@@ -1,8 +1,8 @@
-import mongoose, { Schema, SchemaType } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 
-import { Tag, ITag, ITagSharable } from './tag';
+import { ITag, ITagSharable } from './tag';
 import { IBaseResource } from '../types';
 import { IUser } from './user';
 
@@ -32,7 +32,7 @@ export interface IUserLogEntries {
 const UserLogEntrySchema = new mongoose.Schema({
     owner: {
         type: Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'user',
     },
     content: String,
     tags: [{
@@ -48,7 +48,7 @@ const UserLogEntrySchema = new mongoose.Schema({
     markedForDeletion: {
         type: Boolean,
         default: false,
-    }
+    },
 });
 
 export const UserLogEntry = mongoose.model<IUserLogEntry>('user-log', UserLogEntrySchema);

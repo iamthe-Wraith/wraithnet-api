@@ -1,6 +1,6 @@
-import { RequestHandler } from "express";
-import { NotesService } from "../services/notes";
-import { IRequest } from "../types";
+import { RequestHandler } from 'express';
+import { NotesService } from '../services/notes';
+import { IRequest } from '../types/request';
 import { Response } from '../utils/response';
 
 export class NotesController {
@@ -11,16 +11,16 @@ export class NotesController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    }
+    };
 
     static deleteNote: RequestHandler = async (req: IRequest, res) => {
         try {
-            const note = await NotesService.deleteNote(req);
+            await NotesService.deleteNote(req);
             Response.send(null, req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    }
+    };
 
     static getNoteById: RequestHandler = async (req: IRequest, res) => {
         try {
@@ -29,7 +29,7 @@ export class NotesController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    }
+    };
 
     static getNoteBySlug: RequestHandler = async (req: IRequest, res) => {
         try {
@@ -38,7 +38,7 @@ export class NotesController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    }
+    };
 
     static getNotes: RequestHandler = async (req: IRequest, res) => {
         try {
@@ -48,7 +48,7 @@ export class NotesController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    } 
+    };
 
     static updateNote: RequestHandler = async (req: IRequest, res) => {
         try {
@@ -57,5 +57,5 @@ export class NotesController {
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    } 
+    };
 }

@@ -1,3 +1,4 @@
+/* eslint-disable radix */
 import express from 'express';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -16,11 +17,15 @@ import {
 } from '../constants';
 import {
     IRequest,
-    IUserGetResponse,
-} from '../types';
+} from '../types/request';
 // import { getPaginationPage } from '../utils/pagination';
 
 dayjs.extend(utc);
+
+interface IUserGetResponse {
+    users: IUser[];
+    count?: number;
+}
 
 /**
  * verifies if a submitted role value is
@@ -67,7 +72,8 @@ export class UsersService {
             const results = isValidRole(role);
 
             if (results) {
-                _role = results[1];
+                const [_, r] = results;
+                _role = r;
 
                 if (req.requestor) {
                     /*
@@ -197,7 +203,13 @@ export class UsersService {
             numUsers?: string;
         });
 
-        const _page = 1;
+        let _page = 1;
+
+        if (page) {
+            const p = parseInt(page);
+            if (!isNaN(p)) _page = p;
+        }
+
         let _skipLimit = DEFAULT_USERS_TO_RETURN;
 
         if (username) {
@@ -309,7 +321,8 @@ export class UsersService {
             try {
                 // get user to be updated
                 response = await UsersService.get(query);
-                user = response.users[0];
+                const [u] = response.users;
+                user = u;
             } catch (err: any) {
                 let error:CustomError;
 
@@ -485,7 +498,8 @@ export class UsersService {
 
             try {
                 const results = await UsersService.get(query);
-                user = results.users[0];
+                const [u] = results.users;
+                user = u;
             } catch (err) {
                 throw new CustomError(`failed to retrieve user: ${username}`, ERROR.NOT_FOUND);
             }

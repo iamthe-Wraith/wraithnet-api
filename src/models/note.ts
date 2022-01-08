@@ -8,6 +8,7 @@ import { ITag, ITagSharable } from './tag';
 
 dayjs.extend(utc);
 
+// eslint-disable-next-line no-shadow
 export enum ReservedNoteCategory {
     DND_MISC = 'dnd_misc_resource',
 }
@@ -48,10 +49,10 @@ export interface INoteSharableRef extends IBaseNoteRef {
 const NoteSchema = new mongoose.Schema({
     owner: {
         type: Schema.Types.ObjectId,
-        ref: 'user'
+        ref: 'user',
     },
     access: [{
-        type: String
+        type: String,
     }],
     name: {
         required: true,
@@ -82,7 +83,7 @@ const NoteSchema = new mongoose.Schema({
     markedForDeletion: {
         type: Boolean,
         default: false,
-    }
+    },
 });
 
 export const Note = mongoose.model<INote>('note', NoteSchema);

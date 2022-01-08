@@ -7,7 +7,8 @@ import { ERROR } from '../constants';
 import {
     DailyChecklistItem, IDailyChecklistItem, IDailyChecklistItemRequest, IDailyChecklistItemSharable,
 } from '../models/dnd/daily-checklist-item';
-import { ICollectionResponse, IRequest } from '../types';
+import { ICollectionResponse } from '../types';
+import { IRequest } from '../types/request';
 import CustomError, { asCustomError } from '../utils/custom-error';
 import {
     Campaign, ICampaign, ICampaignRequest, ICampaignSharable,
@@ -22,6 +23,7 @@ import { DnDClass, IDnDClass, IDnDClassSharable } from '../models/dnd/class';
 import { INote, INoteRef, Note } from '../models/note';
 import { NotesService } from './notes';
 import { IUser } from '../models/user';
+import { DnDEvent, IDnDEvent } from '../models/dnd/event';
 
 dayjs.extend(utc);
 
@@ -244,7 +246,7 @@ export class DnDService {
 
     static async createPC(req: IRequest): Promise<IPC> {
         const {
-            age, name, race, classes = [], exp,
+            age, name, race, classes = [], exp, birthday,
         } = (req.body as IPCRequest);
         const { campaignId } = req.params;
 
@@ -295,6 +297,23 @@ export class DnDService {
             throw asCustomError(err);
         }
 
+        let _birthdayEvent: IDnDEvent = null;
+        if (!!birthday) {
+            try {
+                const _birthday = new DnDDate(birthday);
+                _birthdayEvent = new DnDEvent({
+                    owner: req.requestor._id,
+                    campaignId,
+                    date: _birthday.stringify(),
+                    description: `${name}'s birthday`,
+                });
+
+                _birthdayEvent = await _birthdayEvent.save();
+            } catch (err) {
+                throw new CustomError('Invalid birthday', ERROR.INVALID_ARG);
+            }
+        }
+
         if (!!_race && !!_classes) {
             const pc = new PC({
                 owner: req.requestor.id,
@@ -305,6 +324,7 @@ export class DnDService {
                 classes: _classes,
                 age,
                 exp: 0,
+                birthday: _birthdayEvent,
             });
 
             if (typeof exp === 'number') pc.exp = exp;
@@ -452,7 +472,8 @@ export class DnDService {
         let pc: IPC & Document<any, any>;
 
         try {
-            pc = await PC.findOne(query);
+            pc = await PC.findOne(query)
+                .populate('birthday');
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
         } catch (err) {
             throw asCustomError(err);
@@ -462,6 +483,7 @@ export class DnDService {
             pc.markedForDeletion = true;
 
             // TODO: mark note as deleted
+            await DnDEvent.findOneAndUpdate({ _id: pc.birthday._id }, { markedForDeletion: true, lastModified: dayjs().utc().toDate() });
 
             try {
                 await pc.save();
@@ -541,6 +563,24 @@ export class DnDService {
                 .sort({ name: 1 });
 
             return classes;
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    };
+
+    static getEvents = async (requestor: IUser, campaignId: string, date: string) => {
+        try {
+            // initialization will ensure is a valid date
+            const _date = new DnDDate(date);
+
+            const events = await DnDEvent.find({
+                owner: requestor._id,
+                markedForDeletion: false,
+                date: _date.stringify(),
+                campaignId,
+            });
+
+            return events;
         } catch (err) {
             throw asCustomError(err);
         }
@@ -629,7 +669,8 @@ export class DnDService {
             const pc = await PC
                 .findOne(query)
                 .populate('classes')
-                .populate('race');
+                .populate('race')
+                .populate('birthday');
 
             if (!pc) throw new CustomError('pc not found', ERROR.NOT_FOUND);
             return pc;
@@ -677,6 +718,7 @@ export class DnDService {
                 .populate('classes')
                 .populate('race')
                 .populate('note')
+                .populate('birthday')
                 .sort({ name: 1 });
         } catch (err) {
             throw asCustomError(err);
@@ -713,6 +755,22 @@ export class DnDService {
         id: c._id,
     });
 
+    static getSharableEvent = (event: IDnDEvent) => {
+        if (!event) return null;
+
+        const sharable = {
+            campaignId: event.campaignId,
+            createdAt: event.createdAt,
+            date: event.date,
+            description: event.description,
+            id: event._id,
+            lastModified: event.lastModified,
+            owner: event.owner,
+        };
+
+        return sharable;
+    };
+
     static getSharableItem = (item: IDailyChecklistItem): IDailyChecklistItemSharable => {
         const sharable: IDailyChecklistItemSharable = {
             id: item._id,
@@ -741,6 +799,7 @@ export class DnDService {
                 race: DnDService.getSharableRace(pc.race),
                 classes: (pc.classes || []).map(c => DnDService.getSharableClass(c)),
                 age: pc.age,
+                birthday: DnDService.getSharableEvent(pc.birthday),
                 exp: pc.exp,
                 expForNextLevel: getExpForNextLevel(pc.exp),
                 level: getLevel(pc.exp),
@@ -1014,15 +1073,24 @@ export class DnDService {
 
     static async updatePC(req: IRequest): Promise<IPC> {
         const {
-            age, name, race, classes,
+            age, name, race, classes, birthday,
         } = req.body;
         const { campaignId, id } = req.params;
 
-        if (!age && !name && !race && !classes) throw asCustomError(new CustomError('no updatable content found', ERROR.INVALID_ARG));
+        if (!age && !name && !race && !classes && !birthday) throw asCustomError(new CustomError('no updatable content found', ERROR.INVALID_ARG));
 
         if (classes) {
             if (classes.length === 0) throw asCustomError(new CustomError('at least one class is required', ERROR.INVALID_ARG));
             if (!Array.isArray(classes)) throw asCustomError(new CustomError('invalid classes format', ERROR.INVALID_ARG));
+        }
+
+        let _birthday: DnDDate = null;
+        if (birthday) {
+            try {
+                _birthday = new DnDDate(birthday);
+            } catch (err) {
+                throw new CustomError('Invalid birthday found', ERROR.INVALID_ARG);
+            }
         }
 
         const query = {
@@ -1051,6 +1119,24 @@ export class DnDService {
             if (name) pc.name = name;
             if (race) pc.race = race;
             if (classes) pc.classes = classes;
+            if (_birthday) {
+                try {
+                    const bday = !!pc.birthday
+                        ? await DnDEvent.findOne({ _id: pc.birthday })
+                        : new DnDEvent({
+                            owner: req.requestor._id,
+                            campaignId,
+                            date: _birthday.stringify(),
+                            description: `${name}'s birthday`,
+                        });
+
+                    bday.date = _birthday.stringify();
+                    await bday.save();
+                    pc.birthday = bday;
+                } catch (err: any) {
+                    throw new CustomError(err.message);
+                }
+            }
 
             try {
                 await pc.save();

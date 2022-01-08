@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
 
-import { authMiddleware } from '../../middleware/auth'; 
+import { authMiddleware } from '../../middleware/auth';
 import { UsersController } from '../../controllers/users';
-import { AUTHORIZATION_HEADER, DND_ROUTE, ERROR, IMAGE_ROUTE, NOTES_ROUTE, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, UPLOAD_ROUTE, USERS_ROUTE, USER_LOG_ROUTE } from '../../constants';
+import {
+    AUTHORIZATION_HEADER, DND_ROUTE, ERROR, IMAGE_ROUTE, NOTES_ROUTE, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, UPLOAD_ROUTE, USERS_ROUTE, USER_LOG_ROUTE,
+} from '../../constants';
 import CustomError from '../../utils/custom-error';
 import { Response } from '../../utils/response';
 import { UserLogController } from '../../controllers/user-log';
@@ -15,9 +17,9 @@ import { ImageController } from '../../controllers/image';
 
 const router = Router();
 
-/*****************************************************
+/** ***************************************************
  **                      Users                      **
- *****************************************************/
+ **************************************************** */
 router.route(USERS_ROUTE)
     .post((req, res, next) => {
         const token = req.get(AUTHORIZATION_HEADER);
@@ -55,9 +57,9 @@ router.route(`${USER_LOG_ROUTE}/:id`)
 router.route(PROFILE_ROUTE)
     .get(authMiddleware, UsersController.getProfile);
 
-/*****************************************************
+/** ***************************************************
  **                      Tags                       **
- *****************************************************/
+ **************************************************** */
 router.route(TAGS_ROUTE)
     .post(authMiddleware, TagsController.create)
     .get(authMiddleware, TagsController.get);
@@ -70,9 +72,9 @@ router.route(`${TAGS_ROUTE}/:id`)
 router.route(`${TEST_ROUTE}/get-server-time`)
     .get(authMiddleware, TestController.getServerTime);
 
-/*****************************************************
+/** ***************************************************
  **                      Notes                      **
- *****************************************************/
+ **************************************************** */
 router.route(NOTES_ROUTE)
     .post(authMiddleware, NotesController.createNote)
     .get(authMiddleware, NotesController.getNotes);
@@ -85,19 +87,19 @@ router.route(`${NOTES_ROUTE}/:id`)
     .patch(authMiddleware, NotesController.updateNote)
     .delete(authMiddleware, NotesController.deleteNote);
 
-/*****************************************************
+/** ***************************************************
  **                      Images                     **
- *****************************************************/
+ **************************************************** */
 const uploadMiddlware = multer();
 router.route(`${UPLOAD_ROUTE}${IMAGE_ROUTE}`)
-  .post(authMiddleware, uploadMiddlware.single('file'), ImageController.uploadImage)
+    .post(authMiddleware, uploadMiddlware.single('file'), ImageController.uploadImage);
 
 router.route(IMAGE_ROUTE)
     .get(authMiddleware, ImageController.getImages);
 
-/*****************************************************
+/** ***************************************************
  **                      D&D                        **
- *****************************************************/
+ **************************************************** */
 router.route(`${DND_ROUTE}/static/race`)
     .get(authMiddleware, DnDController.getRaces);
 
@@ -118,6 +120,9 @@ router.route(`${DND_ROUTE}/:campaignId/daily-checklist/:id?`)
     .post(authMiddleware, DnDController.addChecklistItem)
     .patch(authMiddleware, DnDController.updateChecklistItem)
     .delete(authMiddleware, DnDController.deleteChecklistItem);
+
+router.route(`${DND_ROUTE}/:campaignId/events`)
+    .get(authMiddleware, DnDController.getEvents);
 
 router.route(`${DND_ROUTE}/:campaignId/item`)
     .post(authMiddleware, DnDController.createItem)
@@ -147,7 +152,7 @@ router.route(`${DND_ROUTE}/:campaignId/pc/:id/inventory`)
     .get(authMiddleware, DnDController.getPCInventory);
 
 router.route(`${DND_ROUTE}/:campaignId/pc/:id/exp`)
-    .patch(authMiddleware, DnDController.updatePCExp)
+    .patch(authMiddleware, DnDController.updatePCExp);
 
 router.route(`${DND_ROUTE}/:campaignId/pc/:id`)
     .get(authMiddleware, DnDController.getPC)
