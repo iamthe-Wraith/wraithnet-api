@@ -24,22 +24,15 @@ import { INote, INoteRef, Note } from '../models/note';
 import { NotesService } from './notes';
 import { IUser } from '../models/user';
 import { DnDEvent, IDnDEvent } from '../models/dnd/event';
+import { IStoreItem, StoreItem } from '../models/dnd/store-item';
 
 dayjs.extend(utc);
 
 type NoteType = 'item' | 'location' | 'misc' | 'npc' | 'pc' | 'quest' | 'session';
 type NoteIdList = 'items' | 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
 
-interface ICampaignStats {
-    sessions?: number;
-    npcs?: number;
-    locations?: number;
-    quests?: number;
-    items?: number;
-    pcs?: number;
-    daysElapsed?: number;
-    inGameDaysElapsed?: number;
-    lastSession?: string;
+interface IStoreInventory {
+    items: IStoreItem[];
 }
 
 interface IExpResult {
@@ -826,6 +819,16 @@ export class DnDService {
             { markedForDeletion: false },
         ];
 
+        interface ICampaignStats {
+            daysElapsed?: number;
+            sessions?: number;
+            npcs?: number;
+            locations?: number;
+            quests?: number;
+            items?: number;
+            pcs?: number;
+        }
+
         const stats: ICampaignStats = {};
 
         if (campaign.firstSessionDate) {
@@ -890,6 +893,19 @@ export class DnDService {
 
         return stats;
     };
+
+    static async getStoreInventory(): Promise<IStoreInventory> {
+        try {
+            const storeItems = await StoreItem
+                .find()
+                .select('_id name cost');
+            return {
+                items: storeItems,
+            };
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
 
     static async updateCampaign(req: IRequest): Promise<ICampaign> {
         const { name, firstSessionDate } = (req.body as ICampaignRequest);
