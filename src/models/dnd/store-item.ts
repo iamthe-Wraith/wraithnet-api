@@ -109,14 +109,6 @@ export interface IStoreItemSharable extends IStoreItemBase {
     id: string;
 }
 
-export interface IStoreMagicItem extends IItemBase {
-    equipment_category: IItemBase;
-    desc: string[];
-    rarity?: keyof IRarities;
-}
-
-export interface IStoreMagicItemModel extends Document, IStoreMagicItem {}
-
 const ItemSchema = new mongoose.Schema({
     index: String,
     name: String,
@@ -200,6 +192,31 @@ const ItemSchema = new mongoose.Schema({
 
 export const StoreItem = mongoose.model<IStoreItem>('store-item', ItemSchema);
 
+// index name
+export interface IStoreMagicItemRefBase extends IItemInit {
+    rarity: string;
+}
+
+export interface IStoreMagicItemRef extends IStoreMagicItemRefBase {
+    _id: string;
+}
+
+export interface IStoreMagicItemRefSharable extends IStoreMagicItemRefBase {
+    id: string;
+}
+export interface IStoreMagicItemBase extends IStoreMagicItemRefBase, IItemBase {
+    equipment_category: IItemBase;
+    desc: string[];
+}
+
+export interface IStoreMagicItem extends Document, IStoreMagicItemBase {
+    _id: string;
+}
+
+export interface IStoreMagicItemSharable extends IStoreMagicItemBase {
+    id: string;
+}
+
 const MagicItemSchema = new mongoose.Schema({
     index: String,
     name: String,
@@ -220,4 +237,4 @@ const MagicItemSchema = new mongoose.Schema({
     isMagicItem: Boolean,
 });
 
-export const MagicItem = mongoose.model<IStoreMagicItemModel>('magic-store-item', MagicItemSchema);
+export const MagicItem = mongoose.model<IStoreMagicItem>('magic-store-item', MagicItemSchema);

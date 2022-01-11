@@ -25,7 +25,7 @@ import { NotesService } from './notes';
 import { IUser } from '../models/user';
 import { DnDEvent, IDnDEvent } from '../models/dnd/event';
 import {
-    IStoreItemRef, IStoreItemRefSharable, StoreItem,
+    IStoreItemRef, IStoreItemRefSharable, IStoreMagicItemRef, IStoreMagicItemRefSharable, MagicItem, StoreItem,
 } from '../models/dnd/store-item';
 
 dayjs.extend(utc);
@@ -35,6 +35,7 @@ type NoteIdList = 'items' | 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions
 
 interface IStoreInventory {
     items: IStoreItemRef[];
+    magicItems: IStoreMagicItemRef[];
 }
 
 interface IExpResult {
@@ -810,15 +811,23 @@ export class DnDService {
     });
 
     static getSharableStoreInventory = (inventory: IStoreInventory) => {
-        const items: IStoreItemRefSharable[] = inventory.items.map(item => ({
+        const storeItems: IStoreItemRefSharable[] = inventory.items.map(item => ({
             id: item._id,
             index: item.index,
             cost: item.cost,
             name: item.name,
         }));
 
+        const storeMagicItems: IStoreMagicItemRefSharable[] = inventory.magicItems.map(item => ({
+            id: item._id,
+            index: item.index,
+            name: item.name,
+            rarity: item.rarity,
+        }));
+
         return {
-            items,
+            items: storeItems,
+            magicItems: storeMagicItems,
         };
     };
 
@@ -913,10 +922,15 @@ export class DnDService {
         try {
             const storeItems = await StoreItem
                 .find()
-                .select('_id name cost');
+                .select('_id index name cost');
+
+            const storeMagicItems = await MagicItem
+                .find()
+                .select('_id index name rarity');
 
             return {
                 items: storeItems as IStoreItemRef[],
+                magicItems: storeMagicItems as IStoreMagicItemRef[],
             };
         } catch (err) {
             throw asCustomError(err);

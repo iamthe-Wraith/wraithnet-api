@@ -363,20 +363,18 @@ export class DnDController {
 
         try {
             if (items) {
+                // eslint-disable-next-line radix
                 _items = parseInt(items);
                 if (isNaN(_items)) throw new CustomError('Invalid items parameter found. Must be a number.', ERROR.INVALID_ARG);
             }
 
             const inventory = await DnDService.getStoreInventory();
 
-            console.log('>>>>> item');
-            console.log(inventory.items[0]);
-
             Response.send(DnDService.getSharableStoreInventory(inventory), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }
-    }
+    };
 
     static updateCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
