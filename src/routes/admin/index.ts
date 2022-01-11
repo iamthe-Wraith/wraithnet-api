@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { DND_ROUTE, NOTES_ROUTE, USERS_ROUTE } from '../../constants';
 import { DnDController } from '../../controllers/dnd';
-import { NotesController } from '../../controllers/notes';
+import { OneOffsController } from '../../controllers/one-offs';
 import { UsersController } from '../../controllers/users';
 import { authMiddleware } from '../../middleware/auth';
 import { minRoleRequiredMiddleware } from '../../middleware/permissions-required';
@@ -12,16 +12,16 @@ const router = Router();
 router.route(USERS_ROUTE)
     .get(authMiddleware, minRoleRequiredMiddleware(ROLE.ADMIN), UsersController.get);
 
-/*****************************************************
+/** ***************************************************
  **                      D&D                        **
- *****************************************************/
+ **************************************************** */
 router.route(`${DND_ROUTE}/race`)
     .post(authMiddleware, minRoleRequiredMiddleware(ROLE.ADMIN), DnDController.createRace);
 
 router.route(`${DND_ROUTE}/race/:raceId`)
     .patch(authMiddleware, minRoleRequiredMiddleware(ROLE.ADMIN), DnDController.updateRace)
     .delete(authMiddleware, minRoleRequiredMiddleware(ROLE.ADMIN), DnDController.deleteRace);
-    
+
 router.route(`${DND_ROUTE}/class`)
     .post(authMiddleware, minRoleRequiredMiddleware(ROLE.ADMIN), DnDController.createClass);
 
@@ -35,5 +35,14 @@ router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc`)
 router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc/:id`)
     .patch(authMiddleware, minRoleRequiredMiddleware(ROLE.ADMIN), DnDController.updateMiscNote)
     .delete(authMiddleware, minRoleRequiredMiddleware(ROLE.ADMIN), DnDController.deleteMiscNote);
+
+/** ***************************************************
+ **                    ONE OFFS                     **
+ **************************************************** */
+router.route(`${DND_ROUTE}/map-magic-items`)
+    .post(authMiddleware, minRoleRequiredMiddleware(ROLE.GOD), OneOffsController.mapMagicItems);
+
+router.route(`${DND_ROUTE}/undo-mapping-magic-items`)
+    .post(authMiddleware, minRoleRequiredMiddleware(ROLE.GOD), OneOffsController.undoMappingMagicItems);
 
 export const adminRouter = router;

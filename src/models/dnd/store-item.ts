@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 export interface IItemInit {
     index: string;
@@ -53,14 +53,6 @@ export interface IRarities {
     unknown: boolean;
 }
 
-// export interface IStoreMagicItem extends IItemBase {
-//     equipment_category: IItemBase;
-//     desc: string[];
-//     rarity?: keyof IRarities;
-// }
-
-// export interface IStoreMagicItemModel extends Document, IStoreMagicItem {}
-
 export interface IContents {
     item: IItemBase;
     quantity: number;
@@ -71,7 +63,11 @@ export interface ISpeed {
     unit: string;
 }
 
-export interface IStoreItem extends IItemBase {
+export interface IStoreItemRefBase extends IItemInit {
+    cost: ICost;
+}
+
+export interface IStoreItemBase extends IItemBase {
     armor_category?: String;
     armor_class?: IArmorClass;
     capacity?: string;
@@ -97,7 +93,29 @@ export interface IStoreItem extends IItemBase {
     weight: number;
 }
 
-export interface IStoreItemModel extends Document, IStoreItem {}
+export interface IStoreItemRef extends IStoreItemRefBase {
+    _id: string;
+}
+
+export interface IStoreItemRefSharable extends IStoreItemRefBase {
+    id: string;
+}
+
+export interface IStoreItem extends Document, IStoreItemBase {
+    _id: string;
+}
+
+export interface IStoreItemSharable extends IStoreItemBase {
+    id: string;
+}
+
+export interface IStoreMagicItem extends IItemBase {
+    equipment_category: IItemBase;
+    desc: string[];
+    rarity?: keyof IRarities;
+}
+
+export interface IStoreMagicItemModel extends Document, IStoreMagicItem {}
 
 const ItemSchema = new mongoose.Schema({
     index: String,
@@ -180,4 +198,26 @@ const ItemSchema = new mongoose.Schema({
     isMagicItem: Boolean,
 });
 
-export const StoreItem = mongoose.model<IStoreItemModel>('store-item', ItemSchema);
+export const StoreItem = mongoose.model<IStoreItem>('store-item', ItemSchema);
+
+const MagicItemSchema = new mongoose.Schema({
+    index: String,
+    name: String,
+    url: String,
+    equipment_category: {
+        index: String,
+        name: String,
+        url: String,
+    },
+    desc: [String],
+    rarity: String,
+    source: String,
+    note: {
+        type: Schema.Types.ObjectId,
+        ref: 'note',
+        required: true,
+    },
+    isMagicItem: Boolean,
+});
+
+export const MagicItem = mongoose.model<IStoreMagicItemModel>('magic-store-item', MagicItemSchema);

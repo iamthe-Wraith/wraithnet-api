@@ -11,6 +11,7 @@ dayjs.extend(utc);
 // eslint-disable-next-line no-shadow
 export enum ReservedNoteCategory {
     DND_MISC = 'dnd_misc_resource',
+    DND_STORE_MAGIC_ITEM = 'dnd_store_magic_item',
 }
 
 export interface IBaseNoteRef extends IBaseResource {

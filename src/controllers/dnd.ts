@@ -368,7 +368,11 @@ export class DnDController {
             }
 
             const inventory = await DnDService.getStoreInventory();
-            Response.send(inventory, req, res);
+
+            console.log('>>>>> item');
+            console.log(inventory.items[0]);
+
+            Response.send(DnDService.getSharableStoreInventory(inventory), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

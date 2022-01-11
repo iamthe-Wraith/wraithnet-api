@@ -24,7 +24,9 @@ import { INote, INoteRef, Note } from '../models/note';
 import { NotesService } from './notes';
 import { IUser } from '../models/user';
 import { DnDEvent, IDnDEvent } from '../models/dnd/event';
-import { IStoreItem, StoreItem } from '../models/dnd/store-item';
+import {
+    IStoreItemRef, IStoreItemRefSharable, StoreItem,
+} from '../models/dnd/store-item';
 
 dayjs.extend(utc);
 
@@ -32,7 +34,7 @@ type NoteType = 'item' | 'location' | 'misc' | 'npc' | 'pc' | 'quest' | 'session
 type NoteIdList = 'items' | 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
 
 interface IStoreInventory {
-    items: IStoreItem[];
+    items: IStoreItemRef[];
 }
 
 interface IExpResult {
@@ -807,6 +809,19 @@ export class DnDService {
         id: race._id,
     });
 
+    static getSharableStoreInventory = (inventory: IStoreInventory) => {
+        const items: IStoreItemRefSharable[] = inventory.items.map(item => ({
+            id: item._id,
+            index: item.index,
+            cost: item.cost,
+            name: item.name,
+        }));
+
+        return {
+            items,
+        };
+    };
+
     static getStats = async (req: IRequest) => {
         const { campaignId } = req.params;
         const campaign = await DnDService.getCampaign(req);
@@ -899,8 +914,9 @@ export class DnDService {
             const storeItems = await StoreItem
                 .find()
                 .select('_id name cost');
+
             return {
-                items: storeItems,
+                items: storeItems as IStoreItemRef[],
             };
         } catch (err) {
             throw asCustomError(err);
