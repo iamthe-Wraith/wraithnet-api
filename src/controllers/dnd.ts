@@ -7,6 +7,8 @@ import { IRequest } from '../types/request';
 import { dndExp } from '../../static/dnd-exp';
 import { NotesService } from '../services/notes';
 import { ReservedNoteCategory } from '../models/note';
+import CustomError from '../utils/custom-error';
+import { ERROR } from '../constants';
 
 export class DnDController {
     static addChecklistItem: RequestHandler = async (req: IRequest, res) => {
@@ -350,6 +352,25 @@ export class DnDController {
         try {
             const stats = await DnDService.getStats(req);
             Response.send(stats, req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    };
+
+    static getStoreInventory: RequestHandler = async (req: IRequest, res) => {
+        const { items } = (req.query as { items: string });
+        let _items = 10;
+
+        try {
+            if (items) {
+                // eslint-disable-next-line radix
+                _items = parseInt(items);
+                if (isNaN(_items)) throw new CustomError('Invalid items parameter found. Must be a number.', ERROR.INVALID_ARG);
+            }
+
+            const inventory = await DnDService.getStoreInventory();
+
+            Response.send(DnDService.getSharableStoreInventory(inventory), req, res);
         } catch (err: any) {
             Response.error(err, req, res);
         }

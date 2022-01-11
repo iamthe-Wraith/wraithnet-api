@@ -24,22 +24,18 @@ import { INote, INoteRef, Note } from '../models/note';
 import { NotesService } from './notes';
 import { IUser } from '../models/user';
 import { DnDEvent, IDnDEvent } from '../models/dnd/event';
+import {
+    IStoreItemRef, IStoreItemRefSharable, IStoreMagicItemRef, IStoreMagicItemRefSharable, MagicItem, StoreItem,
+} from '../models/dnd/store-item';
 
 dayjs.extend(utc);
 
 type NoteType = 'item' | 'location' | 'misc' | 'npc' | 'pc' | 'quest' | 'session';
 type NoteIdList = 'items' | 'locations' | 'misc' | 'npcs' | 'quests' | 'sessions';
 
-interface ICampaignStats {
-    sessions?: number;
-    npcs?: number;
-    locations?: number;
-    quests?: number;
-    items?: number;
-    pcs?: number;
-    daysElapsed?: number;
-    inGameDaysElapsed?: number;
-    lastSession?: string;
+interface IStoreInventory {
+    items: IStoreItemRef[];
+    magicItems: IStoreMagicItemRef[];
 }
 
 interface IExpResult {
@@ -814,6 +810,27 @@ export class DnDService {
         id: race._id,
     });
 
+    static getSharableStoreInventory = (inventory: IStoreInventory) => {
+        const storeItems: IStoreItemRefSharable[] = inventory.items.map(item => ({
+            id: item._id,
+            index: item.index,
+            cost: item.cost,
+            name: item.name,
+        }));
+
+        const storeMagicItems: IStoreMagicItemRefSharable[] = inventory.magicItems.map(item => ({
+            id: item._id,
+            index: item.index,
+            name: item.name,
+            rarity: item.rarity,
+        }));
+
+        return {
+            items: storeItems,
+            magicItems: storeMagicItems,
+        };
+    };
+
     static getStats = async (req: IRequest) => {
         const { campaignId } = req.params;
         const campaign = await DnDService.getCampaign(req);
@@ -825,6 +842,16 @@ export class DnDService {
             { owner: req.requestor.id },
             { markedForDeletion: false },
         ];
+
+        interface ICampaignStats {
+            daysElapsed?: number;
+            sessions?: number;
+            npcs?: number;
+            locations?: number;
+            quests?: number;
+            items?: number;
+            pcs?: number;
+        }
 
         const stats: ICampaignStats = {};
 
@@ -890,6 +917,25 @@ export class DnDService {
 
         return stats;
     };
+
+    static async getStoreInventory(): Promise<IStoreInventory> {
+        try {
+            const storeItems = await StoreItem
+                .find()
+                .select('_id index name cost');
+
+            const storeMagicItems = await MagicItem
+                .find()
+                .select('_id index name rarity');
+
+            return {
+                items: storeItems as IStoreItemRef[],
+                magicItems: storeMagicItems as IStoreMagicItemRef[],
+            };
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
 
     static async updateCampaign(req: IRequest): Promise<ICampaign> {
         const { name, firstSessionDate } = (req.body as ICampaignRequest);
