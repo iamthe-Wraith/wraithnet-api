@@ -39,9 +39,6 @@ router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc/:id`)
 /** ***************************************************
  **                    ONE OFFS                     **
  **************************************************** */
-router.route(`${DND_ROUTE}/map-magic-items`)
-    .post(authMiddleware, minRoleRequiredMiddleware(ROLE.GOD), OneOffsController.mapMagicItems);
-
 router.route(`${DND_ROUTE}/undo-mapping-magic-items`)
     .post(authMiddleware, minRoleRequiredMiddleware(ROLE.GOD), OneOffsController.undoMappingMagicItems);
 
