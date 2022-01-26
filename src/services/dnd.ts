@@ -922,11 +922,13 @@ export class DnDService {
         try {
             const storeItems = await StoreItem
                 .find()
-                .select('_id index name cost');
+                .select('_id index name cost')
+                .sort({ name: 1 });
 
             const storeMagicItems = await MagicItem
                 .find()
-                .select('_id index name rarity');
+                .select('_id index name rarity')
+                .sort({ name: 1 });
 
             return {
                 items: storeItems as IStoreItemRef[],
