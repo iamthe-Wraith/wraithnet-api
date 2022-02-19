@@ -62,7 +62,8 @@ router.route(PROFILE_ROUTE)
  **                  User Settings                   **
  **************************************************** */
 router.route(USER_SETTINGS_ROUTE)
-    .get(authMiddleware, UserSettingsController.get);
+    .get(authMiddleware, UserSettingsController.get)
+    .patch(authMiddleware, UserSettingsController.update);
 
 /** ***************************************************
  **                      Tags                       **
