@@ -6,7 +6,9 @@ import mongoose from 'mongoose';
 import { apiRouter } from './src/routes/api';
 import { authRouter } from './src/routes/auth';
 import { serviceMiddleware } from './src/middleware/service';
-import { ADMIN_ROUTE, API_ROUTE, AUTH_ROUTE, STATUS_ROUTE, UPLOAD_ROUTE } from './src/constants';
+import {
+    ADMIN_ROUTE, API_ROUTE, AUTH_ROUTE, STATUS_ROUTE,
+} from './src/constants';
 import { adminRouter } from './src/routes/admin';
 
 dotenv.config();
@@ -24,8 +26,8 @@ mongoose.connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASS
 });
 
 app.use(cors());
-app.use(express.urlencoded({extended: true}));
-app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.use(STATUS_ROUTE, (_, res) => res.status(200).send());
 

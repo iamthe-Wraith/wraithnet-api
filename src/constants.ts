@@ -41,6 +41,7 @@ export const TEST_ROUTE = '/test';
 export const UPLOAD_ROUTE = '/upload';
 export const USER_LOG_ROUTE = '/user-log';
 export const USERS_ROUTE = '/users';
+export const USER_SETTINGS_ROUTE = '/user-settings';
 export const V1_ROUTE = '/v1';
 
 /* SERVICES */
@@ -56,3 +57,14 @@ export const TOKEN_THRESHOLD = (30 * 60); // is in seconds, not milliseconds
 export const DEFAULT_USERS_TO_RETURN = 10;
 export const MAX_USERS_TO_RETURN = 100;
 export const MIN_PASSWORD_LENGTH = 8;
+
+// eslint-disable-next-line no-shadow
+export enum Themes {
+    Breeze = 'Breeze',
+    PinkBerry = 'PinkBerry',
+    PoisonIvy = 'PoisonIvy',
+    DangerousIce = 'DangerousIce',
+    PlumpCandy = 'PlumpCandy',
+    Villain = 'Villain',
+    AuroraBorealis = 'AuroraBorealis',
+}

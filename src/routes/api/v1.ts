@@ -4,7 +4,7 @@ import multer from 'multer';
 import { authMiddleware } from '../../middleware/auth';
 import { UsersController } from '../../controllers/users';
 import {
-    AUTHORIZATION_HEADER, DND_ROUTE, ERROR, IMAGE_ROUTE, NOTES_ROUTE, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, UPLOAD_ROUTE, USERS_ROUTE, USER_LOG_ROUTE,
+    AUTHORIZATION_HEADER, DND_ROUTE, ERROR, IMAGE_ROUTE, NOTES_ROUTE, PROFILE_ROUTE, TAGS_ROUTE, TEST_ROUTE, UPLOAD_ROUTE, USERS_ROUTE, USER_LOG_ROUTE, USER_SETTINGS_ROUTE,
 } from '../../constants';
 import CustomError from '../../utils/custom-error';
 import { Response } from '../../utils/response';
@@ -14,6 +14,7 @@ import { TestController } from '../../controllers/test';
 import { DnDController } from '../../controllers/dnd';
 import { NotesController } from '../../controllers/notes';
 import { ImageController } from '../../controllers/image';
+import { UserSettingsController } from '../../controllers/user-settings';
 
 const router = Router();
 
@@ -56,6 +57,12 @@ router.route(`${USER_LOG_ROUTE}/:id`)
 
 router.route(PROFILE_ROUTE)
     .get(authMiddleware, UsersController.getProfile);
+
+/** ***************************************************
+ **                  User Settings                   **
+ **************************************************** */
+router.route(USER_SETTINGS_ROUTE)
+    .get(authMiddleware, UserSettingsController.get);
 
 /** ***************************************************
  **                      Tags                       **
