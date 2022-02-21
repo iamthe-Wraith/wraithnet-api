@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import { INote, INoteSharable } from '../note';
 
 export interface IItemInit {
     index: string;
@@ -207,6 +208,7 @@ export interface IStoreMagicItemRefSharable extends IStoreMagicItemRefBase {
 export interface IStoreMagicItemBase extends IStoreMagicItemRefBase, IItemBase {
     equipment_category: IItemBase;
     desc: string[];
+    note: INote | INoteSharable;
 }
 
 export interface IStoreMagicItem extends Document, IStoreMagicItemBase {
