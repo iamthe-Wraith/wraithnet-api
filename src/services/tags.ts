@@ -101,7 +101,7 @@ export class TagsService {
 
         if (text) {
             if (typeof text !== 'string') throw new CustomError('invalid text', ERROR.INVALID_ARG);
-            query.$and.push({ text: { $eq: text } });
+            query.$and.push({ text: { $regex: text } });
         }
 
         if (ids) {
