@@ -126,6 +126,9 @@ router.route(`${DND_ROUTE}${NOTES_ROUTE}/misc/:id`)
 router.route(`${DND_ROUTE}/store-inventory`)
     .get(authMiddleware, DnDController.getStoreInventory);
 
+router.route(`${DND_ROUTE}/store-inventory/magic-item/:id`)
+    .get(authMiddleware, DnDController.getStoreMagicItem);
+
 router.route(`${DND_ROUTE}/:campaignId/daily-checklist/:id?`)
     .get(authMiddleware, DnDController.getChecklist)
     .post(authMiddleware, DnDController.addChecklistItem)

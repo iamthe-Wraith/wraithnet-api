@@ -25,7 +25,7 @@ import { NotesService } from './notes';
 import { IUser } from '../models/user';
 import { DnDEvent, IDnDEvent } from '../models/dnd/event';
 import {
-    IStoreItemRef, IStoreItemRefSharable, IStoreMagicItemRef, IStoreMagicItemRefSharable, MagicItem, StoreItem,
+    IStoreItemRef, IStoreItemRefSharable, IStoreMagicItem, IStoreMagicItemRef, IStoreMagicItemRefSharable, MagicItem, StoreItem,
 } from '../models/dnd/store-item';
 
 dayjs.extend(utc);
@@ -818,18 +818,33 @@ export class DnDService {
             name: item.name,
         }));
 
-        const storeMagicItems: IStoreMagicItemRefSharable[] = inventory.magicItems.map(item => ({
-            id: item._id,
-            index: item.index,
-            name: item.name,
-            rarity: item.rarity,
-        }));
+        const storeMagicItems: IStoreMagicItemRefSharable[] = inventory.magicItems.map(item => DnDService.getSharableStoreMagicItemRef(item));
 
         return {
             items: storeItems,
             magicItems: storeMagicItems,
         };
     };
+
+    static getSharableStoreMagicItemRef(magicItem: IStoreMagicItem | IStoreMagicItemRef) {
+        return {
+            id: magicItem._id,
+            index: magicItem.index,
+            name: magicItem.name,
+            rarity: magicItem.rarity,
+        };
+    }
+
+    static getSharableStoreMagicItem(magicItem: IStoreMagicItem) {
+        return {
+            ...DnDService.getSharableStoreMagicItemRef(magicItem),
+            url: magicItem.url,
+            equipment_category: magicItem.equipment_category,
+            desc: magicItem.desc,
+            source: magicItem.source,
+            note: NotesService.getSharableNote(magicItem.note as INote),
+        };
+    }
 
     static getStats = async (req: IRequest) => {
         const { campaignId } = req.params;
@@ -934,6 +949,19 @@ export class DnDService {
                 items: storeItems as IStoreItemRef[],
                 magicItems: storeMagicItems as IStoreMagicItemRef[],
             };
+        } catch (err) {
+            throw asCustomError(err);
+        }
+    }
+
+    static async getStoreMagicItem(req: IRequest, id: string): Promise<IStoreMagicItem> {
+        try {
+            const item = await MagicItem.findById(id)
+                .populate('note');
+
+            if (!item) throw new CustomError(`Magic item with id: ${id} not found.`, ERROR.NOT_FOUND);
+
+            return item;
         } catch (err) {
             throw asCustomError(err);
         }

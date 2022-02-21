@@ -376,6 +376,20 @@ export class DnDController {
         }
     };
 
+    static getStoreMagicItem: RequestHandler = async (req: IRequest, res) => {
+        const { id } = (req.params as { id: string });
+
+        try {
+            if (!id) throw new CustomError('Unable to load magic item because no id was found.', ERROR.INVALID_ARG);
+
+            const magicItem = await DnDService.getStoreMagicItem(req, id);
+
+            Response.send(DnDService.getSharableStoreMagicItem(magicItem), req, res);
+        } catch (err: any) {
+            Response.error(err, req, res);
+        }
+    };
+
     static updateCampaign: RequestHandler = async (req: IRequest, res) => {
         try {
             const campaign = await DnDService.updateCampaign(req);
