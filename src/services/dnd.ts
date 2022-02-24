@@ -229,10 +229,10 @@ export class DnDService {
         const note = await NotesService.createNote(_noteReq as IRequest);
 
         try {
-            await Campaign.updateOne({
-                _id: campaign.id,
-                $push: { [`${type}${type === 'misc' ? '' : 's'}`]: note.id },
-            });
+            await Campaign.updateOne(
+                { _id: campaign.id },
+                { $push: { [`${type}${type === 'misc' ? '' : 's'}`]: note.id } },
+            );
 
             return note;
         } catch (err) {
