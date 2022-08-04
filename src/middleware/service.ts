@@ -4,7 +4,7 @@ import CustomError from '../utils/custom-error';
 import { Response } from '../utils/response';
 import {
   SERVICES_HEADER,
-  SERVICES
+  SERVICES,
 } from '../constants';
 
 export const serviceMiddleware:RequestHandler = (req, res, next) => {

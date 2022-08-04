@@ -1,4 +1,4 @@
-import express, { RequestHandler } from 'express';
+import express from 'express';
 
 import CustomError from '../utils/custom-error';
 import { Response } from '../utils/response';
@@ -7,36 +7,34 @@ import { UsersService } from '../services/user';
 import { AUTHORIZATION_HEADER, ERROR, TOKEN_REMOVE } from '../constants';
 import { IRequest } from '../types/request';
 
-export const authMiddleware:RequestHandler = async (req:IRequest, res, next) => {
-    const token = req.get(AUTHORIZATION_HEADER);
+export const authMiddleware = async (req: IRequest, res, next) => {
+  const token = req.get(AUTHORIZATION_HEADER);
 
-    if (token !== undefined) {
-        try {
-            const payload = await Token.verify(token);
-            const request = <express.Request>{
-                query: {},
-                params: {},
-            };
-            request.params.username = payload.username;
+  if (!token) Response.error(new CustomError('no authentication token found'), req, res);
 
-            const results = await UsersService.get(request);
+  try {
+    const payload = await Token.verify(token);
+    const request = <express.Request>{
+      query: {},
+      params: {},
+    };
+    request.params.username = payload.username;
 
-            const [u] = results.users;
-            req.requestor = u;
+    const results = await UsersService.get(request);
 
-            next();
-        } catch (err: any) {
-            let error:CustomError;
+    const [u] = results.users;
+    req.requestor = u;
 
-            if (err.isCustomError) {
-                error = err;
-            } else {
-                error = new CustomError(err.message, ERROR.UNAUTHORIZED);
-            }
+    next();
+  } catch (err: any) {
+    let error:CustomError;
 
-            Response.error(error, req, res, TOKEN_REMOVE);
-        }
+    if (err.isCustomError) {
+      error = err;
     } else {
-        Response.error(new CustomError('no authentication token found'), req, res);
+      error = new CustomError(err.message, ERROR.UNAUTHORIZED);
     }
+
+    Response.error(error, req, res, TOKEN_REMOVE);
+  }
 };

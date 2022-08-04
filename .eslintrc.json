@@ -1,75 +1,110 @@
 {
-    "env": {
-        "browser": true,
-        "es2021": true
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "airbnb",
+    "airbnb-typescript",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "ignorePatterns": ["node_modules", "build"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
     },
-    "extends": [
-        "airbnb-base",
-        "plugin:import/typescript"
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "unused-imports"
+  ],
+  "rules": {
+    "arrow-parens": ["off", "always"],
+    "class-methods-use-this": ["off", "always"],
+    "comma-dangle": [
+      "error",
+      {
+        "arrays": "always-multiline",
+        "objects": "always-multiline",
+        "imports": "always-multiline",
+        "exports": "always-multiline",
+        "functions": "always-multiline"
+      }
     ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaVersion": 2020,
-        "sourceType": "module"
-    },
-    "plugins": [
-        "@typescript-eslint",
-        "unused-imports"
+    "consistent-return": ["off", "always"],
+    "import/no-extraneous-dependencies": "off",
+    "import/prefer-default-export": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "jsx-quotes": ["error", "prefer-single"],
+    "lines-between-class-members": ["off", "always"],
+    "max-len": "off",
+    "no-await-in-loop": ["off", "always"],
+    "no-console": "off",
+    "no-extra-boolean-cast": "off",
+    "no-restricted-globals": "off",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.object.name='console'][callee.property.name!=/^(log|warn|error|info|trace)$/]",
+        "message": "Unexpected property on console object was called"
+      }
     ],
-    "rules": {
-        "@typescript-eslint/explicit-module-boundary-types": "off",
+    "no-continue": ["off", "always"],
+    "no-lonely-if": ["off", "always"],
+    "no-nested-ternary": ["off", "always"],
+    "no-param-reassign": ["off", "always"],
+    "no-plusplus": ["off", "always"],
+    "no-sequences": ["off", "always"],
+    "no-underscore-dangle": ["off", "always"],
+    "no-unused-vars": ["error", { "vars": "all", "args": "after-used", "ignoreRestSiblings": false }],
+    "semi": "error",
+    "eqeqeq": "error",
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": [
+      "warn",
+      {
+        "vars": "all",
+        "varsIgnorePattern": "^_",
+        "args": "after-used",
+        "argsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "extends": [
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking"
+      ],
+      "parserOptions": {
+        "project": ["./tsconfig.json"]
+      },
+      "rules": {
+        "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/no-unused-vars": [
-          "error",
-          { "vars": "all", "args": "after-used", "ignoreRestSiblings": false, "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
-        ],
-        "arrow-parens": ["off", "always"],
-        "class-methods-use-this": ["off", "always"],
-        "comma-dangle": ["error", {
-          "arrays": "always-multiline",
-          "objects": "always-multiline",
-          "imports": "always-multiline",
-          "exports": "always-multiline",
-          "functions": "always-multiline"
-        }],
-        "consistent-return": ["off", "always"],
-        "import/extensions": ["off", "always"],
-        "import/no-extraneous-dependencies": "off",
-        "import/prefer-default-export": "off",
-        "indent": ["error", 4],
-        "@typescript-eslint/indent": ["error", 4],
-        "jsx-quotes": ["error", "prefer-single"],
-        "lines-between-class-members": ["off", "always"],
-        "max-len": "off",
-        "no-await-in-loop": ["off", "always"],
-        "no-console": "off",
-        "no-extra-boolean-cast": "off",
-        "no-restricted-globals": "off",
-        "no-restricted-syntax": [
+        "@typescript-eslint/no-floating-promises": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/indent": ["error", 2],
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/naming-convention": [
           "error",
           {
-            "selector": "CallExpression[callee.object.name='console'][callee.property.name!=/^(log|warn|error|info|trace)$/]",
-            "message": "Unexpected property on console object was called"
+            "selector": "variable",
+            "format": ["camelCase", "PascalCase", "UPPER_CASE", "snake_case"],
+            "leadingUnderscore": "allow",
+            "trailingUnderscore": "allow"
           }
-        ],
-        "no-continue": ["off", "always"],
-        "no-lonely-if": ["off", "always"],
-        "no-nested-ternary": ["off", "always"],
-        "no-param-reassign": ["off", "always"],
-        "no-plusplus": ["off", "always"],
-        "no-sequences": ["off", "always"],
-        "no-underscore-dangle": ["off", "always"],
-        "no-unused-vars": [
-          "error",
-          { "vars": "all", "args": "after-used", "ignoreRestSiblings": false, "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
-        ],
-        "semi": "error",
-        "eqeqeq": "error",
-        "unused-imports/no-unused-imports": "error",
-        "unused-imports/no-unused-vars": [
-            "warn",
-            { "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
         ]
+      }
     }
+  ]
 }
+  

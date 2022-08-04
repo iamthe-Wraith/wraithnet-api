@@ -12,18 +12,18 @@ import { ERROR } from '../constants';
 dayjs.extend(utc);
 
 export class OneOffsController {
-    static undoMappingMagicItems:RequestHandler = async (req:IRequest, res) => {
-        try {
-            await Note.deleteMany({ category: 'dnd_store_magic_item' });
-            await MagicItem.deleteMany({});
+  static undoMappingMagicItems:RequestHandler = async (req:IRequest, res) => {
+    try {
+      await Note.deleteMany({ category: 'dnd_store_magic_item' });
+      await MagicItem.deleteMany({});
 
-            Response.send(null, req, res);
-        } catch (err: any) {
-            if (err.isCustom) {
-                Response.error(err, req, res);
-            } else {
-                Response.error(new CustomError(err.message, ERROR.GEN), req, res);
-            }
-        }
-    };
+      Response.send(null, req, res);
+    } catch (err: any) {
+      if (err.isCustom) {
+        Response.error(err, req, res);
+      } else {
+        Response.error(new CustomError(err.message, ERROR.GEN), req, res);
+      }
+    }
+  };
 }
