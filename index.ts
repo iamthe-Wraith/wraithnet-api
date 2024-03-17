@@ -13,7 +13,7 @@ import { adminRouter } from './src/routes/admin';
 
 dotenv.config();
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 const app = express();
 
 mongoose.connection.on('open', () => console.log('[+] database ready'));
